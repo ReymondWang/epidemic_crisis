@@ -37,11 +37,11 @@ class Resource(object):
             
     def dec_medicine(self, med_name, cnt=1):
         if med_name not in self.medicine:
-            raise Exception("Medicine[", med_name, "] is not enough.")
-        elif self.medicine[med_name] <= cnt:
-            raise Exception("Medicine[", med_name, "] is not enough.")
+            raise Exception("Medicine[" + med_name + "] is not in the dict .")
+        elif self.medicine[med_name] < cnt:
+            raise Exception("Medicine[" + med_name + "] is not enough.")
         else:
-            self.medicine[med_name] += cnt
+            self.medicine[med_name] -= cnt
     
     def get_medicine(self, med_name):
         if med_name not in self.medicine:
@@ -52,15 +52,15 @@ class Resource(object):
 if __name__ == "__main__":
     resource = Resource()
     
-    resource.inc_food(1)
-    print(resource.get_food())
-    resource.dec_food()
-    print(resource.get_food())
+    # resource.inc_food(1)
+    # print(resource.get_food())
+    # resource.dec_food()
+    # print(resource.get_food())
     
-    resource.inc_mask(2)
-    print(resource.get_mask())
-    resource.dec_mask()
-    print(resource.get_mask())
+    # resource.inc_mask(2)
+    # print(resource.get_mask())
+    # resource.dec_mask()
+    # print(resource.get_mask())
     
     resource.inc_medicine("penicillin", 1)
     print(resource.get_medicine("penicillin"))
