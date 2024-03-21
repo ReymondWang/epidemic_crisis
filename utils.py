@@ -4,6 +4,7 @@ import gradio as gr
 from multiprocessing import Queue
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import List
 
 SYS_MSG_PREFIX = '【系统】'
 DEFAULT_AGENT_IMG_DIR = "./assets/"
@@ -105,6 +106,21 @@ def send_player_input(msg, uid=None):
     glb_queue_chat_input = glb_uid_dict[uid]["glb_queue_chat_input"]
     glb_queue_chat_input.put([None, msg])
     
+def get_player_input(name=None, uid=None):
+    global glb_uid_dict
+    print("wait queue input")
+    glb_queue_chat_input = glb_uid_dict[uid]["glb_queue_chat_input"]
+    content = glb_queue_chat_input.get(block=True)[1]
+    print(content)
+    if content == "**Reset**":
+        glb_uid_dict[uid] = init_uid_queues()
+        raise ResetException 
+    return content
+
+def query_answer(questions: List, key="ans", uid=None):
+    return get_player_input(uid=uid)
+
+
 @dataclass
 class CheckpointArgs:
     load_checkpoint: str = None
