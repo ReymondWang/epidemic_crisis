@@ -1,15 +1,17 @@
 from enums import InfectionLevel
+from typing import Dict
 
 class Virus(object):
     def __init__(
         self,
         name: str,
-        description: str
+        description: str,
+        feature_dict: Dict = {}
     ) -> None:
         super().__init__()
         self.name = name
         self.description = description
-        self.feature_dict = {}
+        self.feature_dict = feature_dict
         
     def set_feature(self, level: InfectionLevel, feature: str):
         self.feature_dict[level] = feature

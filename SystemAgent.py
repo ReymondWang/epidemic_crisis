@@ -49,6 +49,8 @@ class SystemAgent(AgentBase):
                         return self.show_talk_menu()
                     elif x.get("content") == "主菜单" and content == "":
                         return self.show_main_menu()
+                    elif x.get("content") == "百货商场" and content == "":
+                        content = "百货商场"
 
                 if not hasattr(self, "model") or len(content) == 0:
                     break
@@ -77,8 +79,12 @@ class SystemAgent(AgentBase):
         return msg
     
     
-    def is_content_valid(self, content):
-        return content in ["查看状态", "研发药品", "采购物资", "与村民交谈"]
+    def is_content_valid(self, content) -> bool:
+        total_valid = ["主菜单"]
+        for key in self.round_menu_dict:
+            for item in self.round_menu_dict[key]:
+                total_valid.append(item)
+        return content in total_valid
     
     
     def begin_new_round(self) -> Msg:
@@ -229,3 +235,22 @@ class SystemAgent(AgentBase):
         send_chat_msg("**end_choosing**", uid=self.uid)
         
         return Msg(name="user", content=talk[0])
+    
+    
+if __name__ == "__main__":
+    round_menu_dict = {
+        "menu": ["查看状态", "研发药品", "采购物资", "与村民交谈"],
+        "inspection": ["自己", "小美", "花姐", "凯哥"],
+        "research": ["盘尼西林", "奥斯维他", "RNA疫苗", "强力消毒液"],
+        "place": ["百货商场", "大药房", "医院"],
+        "talking": ["小美", "花姐", "凯哥"]
+    }
+    
+    total_valid = ["主菜单"]
+    for key in round_menu_dict:
+        for item in round_menu_dict[key]:
+            total_valid.append(item)
+            
+    content = "百货商场"
+    val = content in total_valid
+    print(val)
