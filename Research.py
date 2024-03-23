@@ -65,7 +65,7 @@ class Research(AgentBase):
         user_input = get_player_input(uid=self.uid)
         return user_input
 
-    # 为某一个 Medicine 生成问题，此处只返回判断答案的 Prompt. 由环境 Agent 调用
+    # 为某一个 Medicine 生成问题，此处只返回判断答案的 Prompt. 由环境 Agent 调用, -- 可能要修改
     def generate_jud_resp_prompt(self, question, resp):
         medicine = self.medicine
         prompt = f"我会给你一个问题和一个答案，他们应该都是和一个药品相关的。帮我判断这个答案是否回答了这个问题。药品是：{medicine.name}，问题是：{question}, 答案是：{resp}。请回答："
