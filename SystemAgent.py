@@ -127,7 +127,8 @@ class SystemAgent(AgentBase):
     
     def show_inspection_menu(self) -> Msg:
         person_list = self.round_menu_dict["inspection"]
-        person_list.append("主菜单")
+        if "主菜单" not in person_list:
+            person_list.append("主菜单")
         
         choose_person = f""" {SYS_MSG_PREFIX}请选择想要查看状态的对象: <select-box shape="card" 
             type="checkbox" item-width="auto" 
@@ -155,7 +156,8 @@ class SystemAgent(AgentBase):
     
     def show_research_menu(self) -> Msg:
         medicine_list = self.round_menu_dict["research"]
-        medicine_list.append("主菜单")
+        if "主菜单" not in medicine_list:
+            medicine_list.append("主菜单")
         
         choose_medicine = f""" {SYS_MSG_PREFIX}请选择想要研发的药品: <select-box shape="card" 
             type="checkbox" item-width="auto" 
@@ -183,7 +185,8 @@ class SystemAgent(AgentBase):
     
     def show_place_menu(self) -> Msg:
         place_list = self.round_menu_dict["place"]
-        place_list.append("主菜单")
+        if "主菜单" not in place_list:
+            place_list.append("主菜单")
         
         choose_place = f""" {SYS_MSG_PREFIX}请选择想要采购物资的场所: <select-box shape="card" 
             type="checkbox" item-width="auto" 
@@ -211,7 +214,8 @@ class SystemAgent(AgentBase):
     
     def show_talk_menu(self) -> Msg:
         talk_list = self.round_menu_dict["talking"]
-        talk_list.append("主菜单")
+        if "主菜单" not in talk_list:
+            talk_list.append("主菜单")
         
         choose_talk = f""" {SYS_MSG_PREFIX}请选择想要交谈的对象: <select-box shape="card" 
             type="checkbox" item-width="auto" 

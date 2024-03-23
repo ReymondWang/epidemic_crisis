@@ -53,9 +53,20 @@ class Place(AgentBase):
         time.sleep(0.5)
         while True:
             if content == "采购物资":
-                content = self.send_chat(hint="你现在有很多食物，请说一句欢迎采购的话，50字以内")
+                send_chat_msg(f" {SYS_MSG_PREFIX}你可以输入购买xx个任意食物。", uid=self.uid)
+                content = self.send_chat(hint="请说一句欢迎采购食物的话，并询问客人要买多少，50字以内")
+            elif content == "病毒消杀":
+                content = "***kill_virus***"
             elif content == "结束":
                 content = "***end***"
+            else:
+                prompt = self.engine.join(
+                    self.sys_prompt + content,
+                    self.memory.get_memory()
+                )
+                response = self.model(prompt, max=3)
+                send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+                content = get_player_input(uid=self.uid)
             break
 
         msg = Msg(
