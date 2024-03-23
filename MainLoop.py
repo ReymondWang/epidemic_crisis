@@ -130,11 +130,17 @@ def main_loop(args) -> None:
     #----系统Agent end----
     
     #----场所Agent start----
+    place_menu_dict = {
+        "mall": ["采购食物", "病毒消杀", "结束"],
+        "pharmacy": ["采购口罩", "病毒消杀", "结束"],
+        "hospital": ["采购药品", "病毒消杀", "结束"],
+    }
+    
     mall = Place(
         name="百货商场",
         model_config_name="qwen_72b",
         sys_prompt="你是一个百货商场的经营人员，总是热情的欢迎所有客人。",
-        menu=["采购食物", "病毒消杀"],
+        menu_list=place_menu_dict["mall"],
         resource=Resource(food=sys.maxsize),
         virus=place_virus,
         avatar="./assets/mall.jpg",
@@ -144,7 +150,7 @@ def main_loop(args) -> None:
         name="大药房",
         model_config_name="qwen_72b",
         sys_prompt="你是一个药店的经营人员，总是热情的欢迎所有来买药的人。",
-        menu=["采购口罩", "病毒消杀"],
+        menu_list=place_menu_dict["pharmacy"],
         resource=Resource(mask=sys.maxsize),
         virus=place_virus,
         avatar="./assets/pharacy.jpg",
@@ -154,7 +160,7 @@ def main_loop(args) -> None:
         name="医院",
         model_config_name="qwen_72b",
         sys_prompt="你是一个医院的导诊台护士，总是非常耐心的解答所有病人的问题。",
-        menu=["采购药品", "病毒消杀"],
+        menu_list=place_menu_dict["hospital"],
         resource=Resource(),
         virus=place_virus,
         avatar="./assets/pharacy.jpg",
@@ -163,9 +169,9 @@ def main_loop(args) -> None:
     hospital.gen_resource(medicine_status)
     
     place_dic = {
-        "mall": mall,
-        "pharmacy": pharmacy,
-        "hospital": hospital,
+        "百货商场": mall,
+        "大药房": pharmacy,
+        "医院": hospital,
     }
     #----场所Agent end----
     
@@ -201,9 +207,9 @@ def main_loop(args) -> None:
     )
     
     npc_dict = {
-        "beauty": beauty,
-        "flower": flower,
-        "king": king
+        "小美": beauty,
+        "花姐": flower,
+        "凯哥": king
     }
     #----人员Agent end----
     
