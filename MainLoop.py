@@ -10,21 +10,93 @@ from Medicine import Medicine
 from Person import Person
 from enums import InfectionLevel, EffectLevel
 from utils import SYS_MSG_PREFIX
-from utils import send_chat_msg, send_player_msg, send_player_input
+from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input
 from agentscope.message import Msg
+
+#----定义药品相关的信息 start----
+medicine_status = {
+    "盘尼西林": "Y",
+    "奥斯他维": "N",
+    "RNA疫苗": "N",
+    "强力消毒液": "N"
+}
+
+penicillin = Medicine(
+    name="盘尼西林",
+    effect=EffectLevel.POOR,
+    price=2,
+    researchCnt=2
+)
+osweita = Medicine(
+    name="奥斯他维",
+    effect=EffectLevel.COMMON,
+    price=4,
+    researchCnt=4
+)
+rna = Medicine(
+    name="RNA疫苗",
+    effect=EffectLevel.GOOD,
+    price=6,
+    researchCnt=6
+)
+disinfection = Medicine(
+    name="强力消毒液",
+    effect=EffectLevel.GOOD,
+    price=6,
+    researchCnt=6
+)
+medicine_dic = {
+    "盘尼西林": penicillin,
+    "奥斯他维": osweita,
+    "RNA疫苗": rna,
+    "强力消毒液": disinfection,
+}
+
+#----定义药品相关的信息 end----
 
 def place_loop(place: Place, uid):
     place.welcome()
     msg = place.show_main_menu()
     while True:
         msg = place(msg)
-        if msg.get("content") == "***end***":
+        if msg.get("content") == "***kill_virus***":
+            show_available_medicine(uid)
+        elif msg.get("content") == "***end***":
             break
     return Msg(
+            name=place.name,
             role="user",
             content="主菜单"
         )
     
+
+def show_available_medicine(uid):
+    medicine_list = []
+    for key in medicine_status:
+        if medicine_status[key] == "Y":
+            medicine_list.append(key)
+    choose_medicine = f""" {SYS_MSG_PREFIX}请选择要使用: <select-box shape="card" 
+        type="checkbox" item-width="auto" 
+        options='{json.dumps(medicine_list, ensure_ascii=False)}' 
+        select-once></select-box>"""
+    send_chat_msg(
+        choose_medicine,
+        flushing=False,
+        uid=uid,
+    )
+    medicine = []
+    while True:
+        sel_medicine = get_player_input(uid=uid)
+        if isinstance(sel_medicine, str):
+            send_chat_msg(f" {SYS_MSG_PREFIX}请在列表中进行选择。", uid=uid)
+            continue
+        medicine = sel_medicine
+        break
+    send_chat_msg("**end_choosing**", uid=uid)
+    send_player_msg(msg=medicine[0], uid=uid)
+    
+    return Msg(name="user", content=medicine[0])
+            
 
 def main_loop(args) -> None:
     game_description = f"""
@@ -40,7 +112,7 @@ def main_loop(args) -> None:
     round_menu_dict = {
         "menu": ["查看状态", "研发药品", "采购物资", "与村民交谈"],
         "inspection": ["自己", "小美", "花姐", "凯哥"],
-        "research": ["盘尼西林", "奥斯维他", "RNA疫苗", "强力消毒液"],
+        "research": ["盘尼西林", "奥斯他维", "RNA疫苗", "强力消毒液"],
         "place": ["百货商场", "大药房", "医院"],
         "talking": ["小美", "花姐", "凯哥"]
     }
@@ -85,40 +157,6 @@ def main_loop(args) -> None:
     )
     #----定义病毒相关的信息 end----
     
-    #----定义药品相关的信息 start----
-    medicine_status = {
-        "penicillin": "Y",
-        "osweita": "N",
-        "rna": "N",
-        "disinfectant": "N"
-    }
-    
-    penicillin = Medicine(
-        name="盘尼西林",
-        effect=EffectLevel.POOR,
-        price=2,
-        researchCnt=2
-    )
-    osweita = Medicine(
-        name="奥斯维他",
-        effect=EffectLevel.COMMON,
-        price=4,
-        researchCnt=4
-    )
-    rna = Medicine(
-        name="RNA疫苗",
-        effect=EffectLevel.GOOD,
-        price=6,
-        researchCnt=6
-    )
-    medicine_dic = {
-        "penicillin": penicillin,
-        "osweita": osweita,
-        "rna": rna
-    }
-    
-    #----定义药品相关的信息 end----
-    
     #----系统Agent start----
     systemAgent = SystemAgent(
         name="小精灵", 
@@ -139,7 +177,7 @@ def main_loop(args) -> None:
     mall = Place(
         name="百货商场",
         model_config_name="qwen_72b",
-        sys_prompt="你是一个百货商场的经营人员，总是热情的欢迎所有客人。",
+        sys_prompt="你是一个百货商场的经营人员，商场主要售卖各种食物，总是热情的欢迎所有客人。",
         menu_list=place_menu_dict["mall"],
         resource=Resource(food=sys.maxsize),
         virus=place_virus,
@@ -149,21 +187,21 @@ def main_loop(args) -> None:
     pharmacy = Place(
         name="大药房",
         model_config_name="qwen_72b",
-        sys_prompt="你是一个药店的经营人员，总是热情的欢迎所有来买药的人。",
+        sys_prompt="你是一个药店的经营人员，药店主要售卖各种口罩，总是热情的欢迎所有来买药的人。",
         menu_list=place_menu_dict["pharmacy"],
         resource=Resource(mask=sys.maxsize),
         virus=place_virus,
-        avatar="./assets/pharacy.jpg",
+        avatar="./assets/pharmacy.jpg",
         uid=args.uid
     )
     hospital = Place(
         name="医院",
         model_config_name="qwen_72b",
-        sys_prompt="你是一个医院的导诊台护士，总是非常耐心的解答所有病人的问题。",
+        sys_prompt="你是一个医院的导诊台护士，医院里可以买到各类药品，总是非常耐心的解答所有病人的问题。",
         menu_list=place_menu_dict["hospital"],
         resource=Resource(),
         virus=place_virus,
-        avatar="./assets/pharacy.jpg",
+        avatar="./assets/hospital.jpg",
         uid=args.uid
     )
     hospital.gen_resource(medicine_status)
