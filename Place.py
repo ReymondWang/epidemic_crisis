@@ -52,9 +52,9 @@ class Place(AgentBase):
         content = x.get("content")
         time.sleep(0.5)
         while True:
-            if content == "采购物资":
-                send_chat_msg(f" {SYS_MSG_PREFIX}你可以输入购买xx个任意食物。", uid=self.uid)
-                content = self.send_chat(hint="请说一句欢迎采购食物的话，并询问客人要买多少，50字以内")
+            if "采购" in content:
+                send_chat_msg(f" {SYS_MSG_PREFIX}你可以输入购买xx个{content[2:4]}。", uid=self.uid)
+                content = self.send_chat(hint= f"请说一句欢迎{content}的话，并询问客人要买多少，50字以内")
             elif content == "病毒消杀":
                 content = "***kill_virus***"
             elif content == "结束":
