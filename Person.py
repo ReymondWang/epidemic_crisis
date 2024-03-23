@@ -6,6 +6,7 @@ from Virus import Virus
 from agentscope.message import Msg
 from utils import send_chat_msg
 from agentscope.prompt import PromptType, PromptEngine
+
 InfectionLevel_TEXT = {
     0: "Clean",
     1: "Tiny",
@@ -25,6 +26,12 @@ HealthLevel_TEXT = {
 WearingMask_TEXT = {
     True: "已佩戴",
     False: "未佩戴"
+}
+RelationLevel_TEXT = {
+    1: "STRANGE",
+    2: "COMMON",
+    3: "FAMILIAR",
+    4: "INTIMATE"
 }
 class Person(AgentBase):
     def __init__(
@@ -53,7 +60,7 @@ class Person(AgentBase):
         self.mindHealth = HealthLevel.PERFECT
         self.isWearingMask = False
         self.isDead = False
-        self.relation = []
+        self.relations = []
         
     def die(self):
         pass
@@ -76,6 +83,9 @@ class Person(AgentBase):
                        f"口罩数量: {self.resource.get_mask()}\n"
                        f"携带的药品: {self.resource.medicine}\n"
                        )
+        for relation in self.relations :
+            if relation != '':
+                information += f'我和{relation.person2.name}的关系程度是: {RelationLevel_TEXT[relation.level]}\n'
         msg = response.text + '\n' + information
         send_chat_msg(msg, role=self.name, uid=self.uid, avatar=self.avatar)
 if __name__ == "__main__":

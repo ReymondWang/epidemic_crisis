@@ -8,10 +8,11 @@ from Virus import Virus
 from Place import Place
 from Medicine import Medicine
 from Person import Person
-from enums import InfectionLevel, EffectLevel
+from enums import InfectionLevel, EffectLevel, RelationLevel
 from utils import SYS_MSG_PREFIX
 from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input
 from agentscope.message import Msg
+from Relation import Relation
 
 #----定义药品相关的信息 start----
 medicine_status = {
@@ -253,6 +254,19 @@ def main_loop(args) -> None:
         "花姐": flower,
         "凯哥": king
     }
+    person_list = [beauty, flower, king]
+    user = Person(
+        name="玩家",
+        model_config_name="qwen_72b",
+        sys_prompt="你是游戏用户在该游戏里的化身，是一名科学家，能够研发出新的药品对付病毒。",
+        resource=Resource(),
+        virus=people_virus,
+        avatar="./assets/user.jpg",
+        uid=args.uid
+    )
+    for person in person_list :
+        person.relations = [Relation(person, user, RelationLevel.STRANGE)]
+        user.relations.append(Relation(user, person, RelationLevel.STRANGE))
     #----人员Agent end----
     
     msg = systemAgent.begin_new_round()
@@ -262,5 +276,8 @@ def main_loop(args) -> None:
         if content in place_dic:
             msg = place_loop(place_dic[content], uid=args.uid)
 
-        if content in npc_dict:
+        if content in npc_dict :
             msg = inspection_loop(npc_dict[content], uid=args.uid, SystemAgent=systemAgent)
+
+        if content == '自己' :
+            msg = inspection_loop(user, uid=args.uid, SystemAgent=systemAgent)
