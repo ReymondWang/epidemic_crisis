@@ -17,28 +17,9 @@ from collections import defaultdict
 from multiprocessing import Event
 from typing import List
 from utils import SYS_MSG_PREFIX, DEFAULT_AGENT_IMG_DIR
-from utils import check_uuid, get_chat_msg, cycle_dots, send_chat_msg, send_player_input
+from utils import check_uuid, get_chat_msg, cycle_dots, send_chat_msg, send_player_input, send_player_msg
 from utils import ResetException, CheckpointArgs
 from MainLoop import main_loop
-
-# agentscope.init(
-#     model_configs="./config/qwen_72b_chat.json",
-#     save_log=True
-# )
-
-# def main() -> None:
-#     userAgent = UserAgent(name="小南")
-#     dialogAgent = DialogAgent(name="小娜", model_config_name="qwen_72b", sys_prompt="你是一个二次元的萌妹子")
-#     sysAgent = SystemAgent(name="系统", model_config_name="qwen_72b", sys_prompt="你是一个游戏的系统控制角色，负责推进游戏的进行，并且生成一些相关背景。")
-        
-#     x = None
-    
-#     while x is None or x.content != "结束游戏":
-#         x = sysAgent.start_game()
-#         x = sysAgent.begin_new_round()
-#         x = userAgent()
-        
-#         x = sequentialpipeline([dialogAgent, userAgent], x)
 
 MAX_NUM_DISPLAY_MSG = 20
 FAIL_COUNT_DOWN = 30
@@ -76,7 +57,7 @@ def covert_image_to_base64(image_path):
 
 def format_cover_html(name="", bot_avatar_path="assets/bg.png"):
     config = {
-        'name': f"逃出疫情危机",
+        'name': f"逃出瘟疫危机",
         'description': '这是一款模拟消灭瘟疫的知识问答类游戏, 快来开始吧😊',
         'introduction_label': "<br>玩法介绍",
         'introduction_context': "在一个热闹的小镇上，居住着一群善良的人们，<br>"
@@ -92,8 +73,8 @@ def format_cover_html(name="", bot_avatar_path="assets/bg.png"):
     <div class="bot_avatar">
         <img src={image_src} />
     </div>
-    <div class="bot_name">{config.get("name", "逃出疫情危机")}</div>
-    <div class="bot_desc">{config.get("description", "快来经营你的餐厅吧")}</div>
+    <div class="bot_name">{config.get("name", "逃出瘟疫危机")}</div>
+    <div class="bot_desc">{config.get("description", "快来经营你的实验室吧")}</div>
     <div class="bot_intro_label">{config.get("introduction_label", "玩法介绍")}</div>
     <div class="bot_intro_ctx">
     {config.get("introduction_context", "玩法介绍")}</div>
@@ -156,6 +137,10 @@ def reset_glb_var(uid):
     glb_history_dict[uid] = init_uid_list()
     glb_doing_signal_dict[uid] = init_uid_dict()
     glb_end_choosing_index_dict[uid] = -1
+
+def fn_choice(data: gr.EventData, uid):
+    uid = check_uuid(uid)
+    send_player_input(data._data["value"], uid=uid)
 
 if __name__ == "__main__":
     def init_game():
@@ -259,6 +244,12 @@ if __name__ == "__main__":
                         
             with gr.Row():
                 return_welcome_button = gr.Button(value="↩️返回首页")
+        
+        def send_message(msg, uid):
+            uid = check_uuid(uid)
+            send_player_input(msg, uid=uid)
+            send_player_msg(msg, "我", uid=uid)
+            return ""
                 
         def send_reset_message(uid):
             uid = check_uuid(uid)
@@ -277,6 +268,15 @@ if __name__ == "__main__":
         
         new_button.click(send_reset_message, inputs=[uuid]).then(check_for_new_session, inputs=[uuid])
         resume_button.click(check_for_new_session, inputs=[uuid])
+        
+        send_button.click(
+            send_message,
+            [user_chat_input, uuid],
+            user_chat_input,
+        )
+        
+        chatbot.custom(fn=fn_choice, inputs=[uuid])
+        chatsys.custom(fn=fn_choice, inputs=[uuid])
         
         env.load(init_game)
         env.load(get_chat,
