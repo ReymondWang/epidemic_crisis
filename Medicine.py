@@ -29,6 +29,7 @@ class Medicine(object):
     def builtin_medicines():
         medicine_pd = pd.read_excel(PATH_MEDICINE)
         medicine_list = []
+        medicine_name_list = []
 
         for index, row in medicine_pd.iterrows():
             name = row['Name']
@@ -37,11 +38,12 @@ class Medicine(object):
             research_cnt = row['Research_Count']
             medicine_to_add = Medicine(name, effect, price, researchCnt=research_cnt)
             medicine_list.append(medicine_to_add)
+            medicine_name_list = medicine_name_list.append(name)
 
-        return medicine_list
+        return medicine_list, medicine_name_list
 
     def get_medicine_detail(self, name):
-        medicine_list = self.builtin_medicines()
+        medicine_list, _ = self.builtin_medicines()
         for med in medicine_list:
             if name == med.name:
                 return med

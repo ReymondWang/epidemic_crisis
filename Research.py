@@ -1,7 +1,12 @@
 from Medicine import Medicine
+from agentscope.agents import AgentBase
+from agentscope.message import Msg
+import time
+from utils import send_chat_msg, get_player_input
+from agentscope.prompt import PromptType, PromptEngine
 
 
-class Research(object):
+class Research(AgentBase):
     """
     medicine: 本次需要研发的药品
     cur_cnt: 完成了几个回合
@@ -10,17 +15,55 @@ class Research(object):
     def __init__(
             self,
             medicine: Medicine,
-            cur_cnt: int
+            cur_cnt: int,
+            name: str,
+            sys_prompt: str = None,
+            model_config_name: str = None,
+            avatar: str = "",
+            uid: str = None
     ) -> None:
-        super().__init__()
+        super().__init__(name, sys_prompt, model_config_name)
+        self.engine = PromptEngine(self.model, prompt_type=PromptType.LIST)
         self.medicine = medicine
         self.cur_cnt = cur_cnt
+        self.avatar = avatar
+        self.uid = uid
 
-    # 为某一个 Medicine 生成问题，此处只返回问题 Prompt. 由环境 Agent 调用
-    def generate_question_prompt(self):
-        medicine = self.medicine
-        prompt = f"我会给你一个药物，帮我对这个药物生成知识问答型问题。药物名称是：{medicine.name}。你生成的问题是："
-        return prompt
+    def reply(self, x: dict = None) -> dict:
+        if x is not None:
+            self.memory.add(x)
+
+        content = x.get("content")
+        time.sleep(0.5)
+
+        _, name_list = Medicine.builtin_medicines()
+        while True:
+            if content == "研发药物":
+                content = self.send_chat(
+                    hint=f"你有很多药物，我要研发这些药物。请说一句欢迎的话，并让我从一些药物中选择我要研发的药物。50字以内。可供研发的药物：{name_list}")
+            elif content in name_list:
+                content = self.send_chat(
+                    hint=f"帮我对这个药物生成知识问答型问题。药物名称是：{content}。你生成的问题是：")
+            elif content == "结束":
+                content = "***end***"
+            break
+
+        msg = Msg(
+            self.name,
+            role="user",
+            content=content
+        )
+        return msg
+
+    def send_chat(self, hint):
+        prompt = self.engine.join(
+            self.sys_prompt + hint,
+            self.memory.get_memory()
+        )
+        response = self.model(prompt, max=3)
+        send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+        user_input = get_player_input(uid=self.uid)
+        return user_input
 
     # 为某一个 Medicine 生成问题，此处只返回判断答案的 Prompt. 由环境 Agent 调用
     def generate_jud_resp_prompt(self, question, resp):

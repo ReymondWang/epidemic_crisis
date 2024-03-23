@@ -24,11 +24,14 @@ from MainLoop import main_loop
 MAX_NUM_DISPLAY_MSG = 20
 FAIL_COUNT_DOWN = 30
 
+
 def init_uid_list():
     return []
 
+
 def init_uid_dict():
     return {}
+
 
 glb_signed_user = []
 is_init = Event()
@@ -36,6 +39,7 @@ is_init = Event()
 glb_history_dict = defaultdict(init_uid_list)
 glb_doing_signal_dict = defaultdict(init_uid_dict)
 glb_end_choosing_index_dict = defaultdict(lambda: -1)
+
 
 # 图片本地路径转换为 base64 格式
 def covert_image_to_base64(image_path):
@@ -54,6 +58,7 @@ def covert_image_to_base64(image_path):
         # 生成base64编码的地址
         base64_url = f"data:image/{ext};base64,{base64_data}"
         return base64_url
+
 
 def format_cover_html(name="", bot_avatar_path="assets/bg.png"):
     config = {
@@ -81,6 +86,7 @@ def format_cover_html(name="", bot_avatar_path="assets/bg.png"):
 </div>
 """
 
+
 def get_chat(uid) -> List[List]:
     uid = check_uuid(uid)
     global glb_history_dict
@@ -96,11 +102,12 @@ def get_chat(uid) -> List[List]:
             line[1]['text'] = "思考中"
             glb_doing_signal_dict[uid] = line
         elif line[1] and line[1]['text'] == "**end_choosing**":
-            for idx in range(len(glb_history_dict[uid])-1, glb_end_choosing_index_dict[uid], -1):
+            for idx in range(len(glb_history_dict[uid]) - 1, glb_end_choosing_index_dict[uid], -1):
                 if (glb_history_dict[uid][idx][1] and "select-box" in glb_history_dict[uid][idx][1]['text']):
                     pattern = re.compile(r'(<select-box[^>]*?)>')
                     replacement_text = r'\1 disabled="True">'
-                    glb_history_dict[uid][idx][1]['text'] = pattern.sub(replacement_text, glb_history_dict[uid][idx][1]['text'])
+                    glb_history_dict[uid][idx][1]['text'] = pattern.sub(replacement_text,
+                                                                        glb_history_dict[uid][idx][1]['text'])
             glb_end_choosing_index_dict[uid] = len(glb_history_dict[uid]) - 1
         else:
             glb_history_dict[uid] += [line]
@@ -113,7 +120,7 @@ def get_chat(uid) -> List[List]:
                 dial_msg.append(line)
             elif line:
                 pattern = re.compile(r'^【系统】(?:\d+秒后进入小镇日常。|发生错误 .+?, 即将在\d+秒后重启)$', re.DOTALL)
-                if pattern.match(msg.get("text", "")) and len(sys_msg)>=1 :
+                if pattern.match(msg.get("text", "")) and len(sys_msg) >= 1:
                     sys_msg[-1] = line
                 else:
                     sys_msg.append(line)
@@ -132,15 +139,18 @@ def get_chat(uid) -> List[List]:
 
     return dial_msg[-MAX_NUM_DISPLAY_MSG:], sys_msg[-MAX_NUM_DISPLAY_MSG:]
 
+
 def reset_glb_var(uid):
     global glb_history_dict, glb_doing_signal_dict, glb_end_choosing_index_dict
     glb_history_dict[uid] = init_uid_list()
     glb_doing_signal_dict[uid] = init_uid_dict()
     glb_end_choosing_index_dict[uid] = -1
 
+
 def fn_choice(data: gr.EventData, uid):
     uid = check_uuid(uid)
     send_player_input(data._data["value"], uid=uid)
+
 
 if __name__ == "__main__":
     def init_game():
@@ -160,7 +170,8 @@ if __name__ == "__main__":
             agentscope.init(model_configs=register_configs,
                             logger_level="DEBUG")
             is_init.set()
-    
+
+
     def check_for_new_session(uid):
         uid = check_uuid(uid)
         if uid not in glb_signed_user:
@@ -169,13 +180,14 @@ if __name__ == "__main__":
             print(f"Total number of users: {len(glb_signed_user)}")
             game_thread = threading.Thread(target=start_game, args=(uid,))
             game_thread.start()
-    
+
+
     def start_game(uid):
         is_init.wait()
         uid = check_uuid(uid)
         args = CheckpointArgs()
         args.uid = uid
-        
+
         while True:
             try:
                 main_loop(args)
@@ -189,7 +201,8 @@ if __name__ == "__main__":
                         uid=uid)
                     time.sleep(1)
             reset_glb_var(uid)
-    
+
+
     with gr.Blocks(css="assets/app.css") as env:
         uuid = gr.Textbox(label='modelscope_uuid', visible=False)
         tabs = gr.Tabs(visible=True)
@@ -202,7 +215,7 @@ if __name__ == "__main__":
                         new_button = gr.Button(value='🚀新的探险', )
                     with gr.Column():
                         resume_button = gr.Button(value='🔥续写情缘', )
-        
+
         game_tabs = gr.Tabs(visible=False)
         with game_tabs:
             main_tab = gr.Tab('主界面', id=0)
@@ -241,48 +254,53 @@ if __name__ == "__main__":
                 with gr.Row():
                     with gr.Column():
                         user = gr.Blocks()
-                        
+
             with gr.Row():
                 return_welcome_button = gr.Button(value="↩️返回首页")
-        
+
+
         def send_message(msg, uid):
             uid = check_uuid(uid)
             send_player_input(msg, uid=uid)
             send_player_msg(msg, "我", uid=uid)
             return ""
-                
+
+
         def send_reset_message(uid):
             uid = check_uuid(uid)
             send_player_input("**Reset**", uid=uid)
             return ""
-        
+
+
         def game_ui():
             return gr.update(visible=False), gr.update(visible=True)
 
+
         def welcome_ui():
             return gr.update(visible=True), gr.update(visible=False)
-        
+
+
         new_button.click(game_ui, outputs=[tabs, game_tabs])
         resume_button.click(game_ui, outputs=[tabs, game_tabs])
         return_welcome_button.click(welcome_ui, outputs=[tabs, game_tabs])
-        
+
         new_button.click(send_reset_message, inputs=[uuid]).then(check_for_new_session, inputs=[uuid])
         resume_button.click(check_for_new_session, inputs=[uuid])
-        
+
         send_button.click(
             send_message,
             [user_chat_input, uuid],
             user_chat_input,
         )
-        
+
         chatbot.custom(fn=fn_choice, inputs=[uuid])
         chatsys.custom(fn=fn_choice, inputs=[uuid])
-        
+
         env.load(init_game)
         env.load(get_chat,
-                  inputs=[uuid],
-                  outputs=[chatbot, chatsys],
-                  every=0.5)
-    
+                 inputs=[uuid],
+                 outputs=[chatbot, chatsys],
+                 every=0.5)
+
     env.queue()
     env.launch()

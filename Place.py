@@ -3,7 +3,7 @@ from agentscope.prompt import PromptType, PromptEngine
 from agentscope.message import Msg
 
 from typing import Optional
-from enums import InfectionLevel,EffectLevel
+from enums import InfectionLevel, EffectLevel
 from Resource import Resource
 from Virus import Virus
 from Medicine import Medicine
@@ -15,6 +15,7 @@ import json
 from utils import send_chat_msg, get_player_input, send_player_msg
 from utils import SYS_MSG_PREFIX
 
+
 class Place(AgentBase):
     """
     infection: 场所的污染等级
@@ -24,16 +25,16 @@ class Place(AgentBase):
     """
 
     def __init__(
-        self, 
-        name: str, 
-        sys_prompt: str = None, 
-        model_config_name: str = None, 
-        menu_list: Optional[list] = None,
-        infection: InfectionLevel = InfectionLevel.CLEAN, 
-        resource: Resource = None, 
-        virus: Virus = None, 
-        avatar: str = "",
-        uid: str = None
+            self,
+            name: str,
+            sys_prompt: str = None,
+            model_config_name: str = None,
+            menu_list: Optional[list] = None,
+            infection: InfectionLevel = InfectionLevel.CLEAN,
+            resource: Resource = None,
+            virus: Virus = None,
+            avatar: str = "",
+            uid: str = None
     ) -> None:
         super().__init__(name, sys_prompt, model_config_name)
         self.engine = PromptEngine(self.model, prompt_type=PromptType.LIST)
@@ -44,11 +45,10 @@ class Place(AgentBase):
         self.avatar = avatar
         self.uid = uid
 
-
     def reply(self, x: dict = None) -> dict:
         if x is not None:
             self.memory.add(x)
-            
+
         content = x.get("content")
         time.sleep(0.5)
         while True:
@@ -57,15 +57,14 @@ class Place(AgentBase):
             elif content == "结束":
                 content = "***end***"
             break
-        
+
         msg = Msg(
             self.name,
             role="user",
             content=content
         )
         return msg
-    
-    
+
     def send_chat(self, hint):
         prompt = self.engine.join(
             self.sys_prompt + hint,
@@ -75,21 +74,19 @@ class Place(AgentBase):
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
         user_input = get_player_input(uid=self.uid)
         return user_input
-    
-    
+
     def welcome(self) -> Msg:
         start_hint = "请生成一段欢迎词，100字以内。"
-        
+
         prompt = self.engine.join(
             self.sys_prompt + start_hint,
             self.memory.get_memory()
         )
-        
+
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
-        
-        
-    def show_main_menu(self) -> Msg:        
+
+    def show_main_menu(self) -> Msg:
         choose_menu = f""" {SYS_MSG_PREFIX}请选择想要进行的事项: <select-box shape="card"
                     type="checkbox" item-width="auto"
                 options='{json.dumps(self.menu_list[0], ensure_ascii=False)}' 
@@ -99,7 +96,7 @@ class Place(AgentBase):
             flushing=False,
             uid=self.uid,
         )
-        
+
         menu = []
         while True:
             sel_menu = get_player_input(uid=self.uid)
@@ -110,10 +107,9 @@ class Place(AgentBase):
             break
         send_chat_msg("**end_choosing**", uid=self.uid)
         send_player_msg(menu[0], "我", uid=self.uid)
-        
+
         return Msg(name="user", content=menu[0])
-    
-        
+
     def display_info(self):
         print(f"Infection Level: {self.infection}")
         print(f"Resource-food: {self.resource.food}")
@@ -124,7 +120,6 @@ class Place(AgentBase):
             print(f"Name: {self.virus.name}")
             print(f"Description: {self.virus.description}")
 
-
     def sanitize(self, medicine: Medicine):
         # 实现对 infection 的控制，根据药物的 effect 对 infection 进行减少
         reduction = {
@@ -134,13 +129,12 @@ class Place(AgentBase):
         }
         if self.infection.value > 0:
             self.infection -= reduction[medicine.effect]
-            if self.infection < 0 :
+            if self.infection < 0:
                 self.infection = 0
             return True
         else:
             print(f"The {self.background}) is clean, you don't need to use medicine to sanitize it.")
             return False
-
 
     def infect(self, person: Person):
         # 判定来到场所的人是否会感染病毒
@@ -156,7 +150,6 @@ class Place(AgentBase):
         if random.random() < chance:
             print(f"{person.name} has been infected at {self.background}")
 
-
     def gen_resource(self, medicine_dict: dict):
         resource = Resource()
         medicine = {}
@@ -165,14 +158,13 @@ class Place(AgentBase):
                 medicine[key] = sys.maxsize
         resource.medicine = medicine
         self.resource = resource
-                
+
 
 if __name__ == "__main__":
     resource = Resource()  # 实例化 Resource 类
     virus = Virus("Corona", "It is a very terrible virus")  # 实例化 Virus 类
     place = Place(InfectionLevel.DEAD, resource, virus, "market")  # 创建 Place 实例
     place.display_info()
-
 
     # 测试 sanitize 方法
     medicine = Medicine(name="盘尼西林", effect=EffectLevel.POOR, price=5, researchCnt=5)
