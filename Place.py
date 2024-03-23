@@ -1,7 +1,8 @@
 from agentscope.agents import AgentBase
+from agentscope.prompt import PromptType, PromptEngine
 from agentscope.message import Msg
 
-from typing import List
+from typing import Optional
 from enums import InfectionLevel,EffectLevel
 from Resource import Resource
 from Virus import Virus
@@ -27,7 +28,7 @@ class Place(AgentBase):
         name: str, 
         sys_prompt: str = None, 
         model_config_name: str = None, 
-        menu: List = [],
+        menu_list: Optional[list] = None,
         infection: InfectionLevel = InfectionLevel.CLEAN, 
         resource: Resource = None, 
         virus: Virus = None, 
@@ -35,7 +36,8 @@ class Place(AgentBase):
         uid: str = None
     ) -> None:
         super().__init__(name, sys_prompt, model_config_name)
-        self.menu = menu,
+        self.engine = PromptEngine(self.model, prompt_type=PromptType.LIST)
+        self.menu_list = menu_list,
         self.infection = infection
         self.resource = resource
         self.virus = virus
@@ -87,13 +89,10 @@ class Place(AgentBase):
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
         
         
-    def show_main_menu(self) -> Msg:
-        menu_list = self.menu
-        menu_list.append("结束")
-        
+    def show_main_menu(self) -> Msg:        
         choose_menu = f""" {SYS_MSG_PREFIX}请选择想要进行的事项: <select-box shape="card"
                     type="checkbox" item-width="auto"
-                options='{json.dumps(menu_list, ensure_ascii=False)}' 
+                options='{json.dumps(self.menu_list[0], ensure_ascii=False)}' 
                 select-once></select-box>"""
         send_chat_msg(
             choose_menu,
