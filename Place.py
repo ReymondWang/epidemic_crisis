@@ -52,21 +52,29 @@ class Place(AgentBase):
         content = x.get("content")
         time.sleep(0.5)
         while True:
-            if content == "采购物资":
-                send_chat_msg(f" {SYS_MSG_PREFIX}你可以输入购买xx个任意食物。", uid=self.uid)
-                content = self.send_chat(hint="请说一句欢迎采购食物的话，并询问客人要买多少，50字以内")
+            if "采购" in content:
+                if "百货商场" == self.name:
+                    content = self.send_chat(hint="请说一句欢迎购买食物的话，并询问客人要买多少，50字以内")
+                elif "大药房" == self.name:
+                    content = self.send_chat(hint="请说一句欢迎购买口罩的话，并询问客人要买多少，50字以内")
+                elif "医院" == self.name:
+                    content = self.send_chat(hint="请说一句欢迎购买药品的话，并询问病人要买多少，50字以内")
             elif content == "病毒消杀":
                 content = "***kill_virus***"
             elif content == "结束":
                 content = "***end***"
             else:
-                prompt = self.engine.join(
-                    self.sys_prompt + content,
-                    self.memory.get_memory()
-                )
-                response = self.model(prompt, max=3)
-                send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
-                content = get_player_input(uid=self.uid)
+                res = self.get_number(content)
+                if res["success"] == "Y":
+                    content = res
+                else:
+                    prompt = self.engine.join(
+                        self.sys_prompt + content,
+                        self.memory.get_memory()
+                    )
+                    response = self.model(prompt, max=3)
+                    send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+                    content = get_player_input(uid=self.uid)
             break
         
         msg = Msg(
@@ -87,6 +95,37 @@ class Place(AgentBase):
         user_input = get_player_input(uid=self.uid)
         return user_input
     
+    
+    def get_number(self, content) -> dict:
+        hint = f"""现在需要从一句话中获取用户想要购买东西的数量。
+        例子1
+        我要购买10个食物
+        食物10
+        例子2
+        我要购买5个口罩
+        口罩5
+        例子3
+        我要购买5盒盘尼西林
+        盘尼西林5
+        请用以下格式返回
+        名称:数量
+        """
+        prompt = self.engine.join(
+            hint + "\n" + content
+        )
+        response = self.model(prompt, max=3)
+        res_str = response.text
+        print("------判断数量------" + response.text)
+        
+        res = {}
+        if ":" in res_str:
+            res["success"] = "Y"
+            res["content"] = res_str
+        else:
+            res["success"] = "N"
+        
+        return res
+        
     
     def welcome(self) -> Msg:
         start_hint = "请生成一段欢迎词，100字以内。"

@@ -63,6 +63,10 @@ def place_loop(place: Place, uid):
             show_available_medicine(uid)
         elif msg.get("content") == "***end***":
             break
+        elif isinstance(msg.get("content"), dict):
+            res = msg.get("content")
+            print(res)
+            break
     return Msg(
             name=place.name,
             role="user",
