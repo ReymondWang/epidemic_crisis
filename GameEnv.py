@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import agentscope
 from agentscope.agents import UserAgent, DialogAgent
 from agentscope.msghub import msghub

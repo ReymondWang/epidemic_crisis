@@ -8,6 +8,10 @@ from Virus import Virus
 from Place import Place
 from Medicine import Medicine
 from Person import Person
+from Person import User
+from Person import MallStaff
+from Person import DrugstoreStaff
+from Person import Doctor
 from enums import InfectionLevel, EffectLevel, RelationLevel
 from utils import SYS_MSG_PREFIX
 from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input
@@ -258,7 +262,7 @@ def main_loop(args) -> None:
     #----场所Agent end----
     
     #----人员Agent start----
-    beauty = Person(
+    beauty = MallStaff(
         name="小美",
         model_config_name="qwen_72b",
         sys_prompt="你是一个心地善良的女生，性格活泼开朗，曾经在百货商场上过一段时间班。",
@@ -268,7 +272,7 @@ def main_loop(args) -> None:
         uid=args.uid
     )
     
-    flower = Person(
+    flower = DrugstoreStaff(
         name="花姐",
         model_config_name="qwen_72b",
         sys_prompt="你是一个中年女性，随让脾气有些刻板，但是生活很幸福，曾经在大药房上过一段时间班。",
@@ -278,7 +282,7 @@ def main_loop(args) -> None:
         uid=args.uid
     )
     
-    king = Person(
+    king = Doctor(
         name="凯哥",
         model_config_name="qwen_72b",
         sys_prompt="你是一个中年男性，是一个竟然非常丰富的内科医生，曾经有一个女儿，但是很不幸两年前离婚了，女儿跟着妈妈走了。",
@@ -295,7 +299,7 @@ def main_loop(args) -> None:
     }
     
     person_list = [beauty, flower, king]
-    user = Person(
+    user = User(
         name="玩家",
         model_config_name="qwen_72b",
         sys_prompt="你是游戏用户在该游戏里的化身，是一名科学家，能够研发出新的药品对付病毒。",
