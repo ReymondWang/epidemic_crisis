@@ -82,11 +82,11 @@
   justify-content: center;
   align-items: center;
   min-height: 650px;
-  border: 1px solid rgba(229, 231, 235, 0.6); /* 在边框中添加一点透明度 */
-  border-radius: 16px; /* 增加边框圆角 */
-  padding: 40px; /* 增加内部间距 */
-  background-color: #ffffff; /* 添加背景颜色 */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加轻微的阴影效果 */
+  border: 1px solid rgba(229, 231, 235, 0.6);
+  border-radius: 16px;
+  padding: 40px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .bot_avatar {
@@ -108,22 +108,22 @@
 }
 
 .bot_name {
-  font-size: 30px; /* 调整字体大小 */
-  color: #333333; /* 字体颜色更深，增加对比度 */
-  margin-top: 20px; /* 调整名称顶部的间距 */
-  font-weight: bold; /* 字体加粗 */
-  text-transform: uppercase; /* 文字大写 */
-  letter-spacing: 1.5px; /* 增加字母间距 */
-  transition: all 0.3s ease; /* 平滑过渡动画 */
+  font-size: 30px;
+  color: #333333;
+  margin-top: 20px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  transition: all 0.3s ease;
 }
 
 .bot_desc {
-  color: #444444; /* 字体颜色更深 */
-  font-size: 18px; /* 增加字体大小 */
-  margin: 20px 0; /* 增加上下间距 */
-  text-align: center; /* 文字居中 */
-  line-height: 1.5; /* 增加行高，提升可读性 */
-  transition: all 0.3s ease; /* 平滑过渡动画 */
+  color: #444444;
+  font-size: 18px;
+  margin: 20px 0;
+  text-align: center;
+  line-height: 1.5;
+  transition: all 0.3s ease;
 }
 
 
@@ -166,33 +166,32 @@
 }
 
 .bot_intro_label {
-  font-size: 18px; /* 标题字体大小 */
-  color: #333; /* 字体颜色，这里使用深灰色 */
-  font-weight: bold; /* 字体加粗 */
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* 文字阴影 */
-  transition: all 0.3s ease; /* 平滑过渡动画 */
-  padding: 10px; /* 内填充 */
-  margin-bottom: 20px; /* 底部外边距 */
-  border-bottom: 2px solid #ddd; /* 底部边框样式 */
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
 }
 
 .bot_intro_ctx {
   display: grid;
-  place-items: center; /* 完美居中 */
-  height: 100px; /* 高度 */
-  font-size: 15px; /* 正文字体大小 */
-  text-align: center; /* 文字居中 */
-  color: #555; /* 正文字体颜色，这里使用较浅的灰色 */
-  border-radius: 8px; /* 边框圆角 */
-  transition: transform 0.3s ease; /* 平滑过渡动画 */
+  place-items: center;
+  height: 100px;
+  font-size: 15px;
+  text-align: center;
+  color: #555;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
 }
 
-/* 鼠标悬停时的动画效果 */
 .bot_desc:hover,
 .bot_name:hover,
 .bot_intro_label:hover,
 .bot_intro_ctx:hover {
-  transform: translateY(-5px); /* 向上移动 */
+  transform: translateY(-5px);
 }
 
 
@@ -245,7 +244,6 @@
     color: #9e9e9e;
 }
 
-/* 线索卡片样式 */
 .clue-card {
     cursor: pointer;
     max-width: 200px;
@@ -264,13 +262,11 @@
     transition: box-shadow 0.3s;
 }
 
-/* 鼠标悬停时的阴影效果 */
 .clue-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(0,0,0,0.5);
 }
 
-/* 未发现线索的样式 */
 .clue-card-locked {
     background: repeating-linear-gradient(45deg, #ccc, #ccc 10px, #ddd 10px, #ddd 20px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.5);
@@ -311,39 +307,36 @@
   }
 }
 
-/* tab基本样式 */
 .mytabs {
   /*margin: 10px;*/
-  margin-bottom: 40px; /* 添加底部外边距 */
-  white-space: nowrap; /* 确保所有tab都在一行显示 */
-  overflow-x: auto; /* 允许横向滚动 */
-  min-height: 330px; /* 请根据实际内容高度调整此值 */
+  margin-bottom: 40px;
+  white-space: nowrap;
+  overflow-x: auto;
+  min-height: 330px;
 }
 
-/* 隐藏radio按钮 */
 .mytabs input[type="radio"] {
   display: none;
 }
 
-/* 设计样式 */
 .mytabs label {
   display: inline-block;
-  padding: 10px 20px; /* 增加左右padding */
+  padding: 10px 20px;
   margin-right: 1px;
-  border: 1px solid transparent; /* 灰色边框 */
+  border: 1px solid transparent;
   border-bottom: none;
   cursor: pointer;
-  background-color: #fff; /* 标签默认背景颜色 */
-  transition: background-color 0.3s ease, border-color 0.3s ease; /* 过渡效果 */
-  /*font-size: 16px; !* 字体大小 *!*/
-  color: #333; /* 字体颜色 */
-  border-radius: 5px 5px 0 0; /* 圆角边框，上左和上右设为5px，下左和下右保持为0 */
-  position: relative; /* 使内容区域不影响标签的布局 */
+  background-color: #fff;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  /*font-size: 16px;*/
+  color: #333;
+  border-radius: 5px 5px 0 0;
+  position: relative;
 }
 
 .mytab {
-  display: inline-block; /* 使得tab容器并排显示 */
-  vertical-align: top; /* 对齐标签 */
+  display: inline-block;
+  vertical-align: top;
   padding-top: 10px;
   /*display: flex; */
   flex-wrap: wrap;
@@ -351,40 +344,37 @@
   gap: 20px;
 }
 
-/* 隐藏所有.tab-content元素 */
 .mytab-content {
   display: none;
   flex-wrap: wrap;
   border: 1px solid #ccc;
-  padding: 10px 20px; /* 增加左右padding */
-  white-space: normal; /* 允许内容正常换行 */
-  position: absolute; /* 使内容区域不影响标签的布局 */
-  border-top: none; /* 标签已有边框 */
+  padding: 10px 20px;
+  white-space: normal;
+  position: absolute;
+  border-top: none;
   left: 0;
-  background: #fff; /* 内容区域的背景颜色 */
+  background: #fff;
   width: 100%;
-  box-sizing: border-box; /* 保证边框和内边距不会增加宽度 */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 添加阴影效果 */
-  border-radius: 0 0 5px 5px; /* 圆角边框，下左和下右设为5px，上左和上右保持为0 */
+  box-sizing: border-box;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 0 0 5px 5px;
   justify-content: center;
   gap: 20px;
-  max-height: 320px; /* 设置最大高度，根据需要调整这个值 */
-  overflow-y: auto; /* 允许超出最大高度时垂直滚动 */
+  max-height: 320px;
+  overflow-y: auto;
 }
 
-/* 当radio按钮被选中时，改变紧随其后的label的样式 */
 .mytabs input[type="radio"]:checked + label {
-  background-color: #fff; /* 选中标签的背景颜色 */
-  border-color: #ccc; /* 选中标签的边框颜色 */
-  border-bottom: 1px solid #fff; /* 使选中标签与内容区域融合 */
-  border-top: 2px solid #ccc; /* 选中标签的顶部边框，可以设置为你喜欢的颜色 */
-  border-radius: 5px 5px 0 0; /* 调整圆角以覆盖内容区域的顶部边框 */
+  background-color: #fff;
+  border-color: #ccc;
+  border-bottom: 1px solid #fff;
+  border-top: 2px solid #ccc;
+  border-radius: 5px 5px 0 0;
 }
 
-/* 当radio按钮被选中时，显示对应的.tab-content元素 */
 .mytabs input[type="radio"]:checked ~ .mytab-content {
   display: flex;
-  border-top: none; /* 移除内容区域的顶部边框以融合选中标签 */
+  border-top: none;
 }
 
 /*quest-list {*/
@@ -396,9 +386,9 @@
 
 /*.quest {*/
 /*    padding: 20px;*/
-/*    background-color: rgba(255,255,255,0.8); !* 设置半透明的白色背景以提升可读性 *!*/
+/*    background-color: rgba(255,255,255,0.8);
 /*    margin-bottom: 20px;*/
-/*    border: 1px solid #dcd0c0; !* 模拟羊皮纸边缘的颜色 *!*/
+/*    border: 1px solid #dcd0c0;
 /*    border-radius: 8px;*/
 /*    transition: box-shadow 0.3s;*/
 /*}*/
@@ -413,10 +403,10 @@
 /*}*/
 
 /*.quest-name {*/
-/*    font-family: 'Playfair Display', serif; !* 使用复古风格的字体 *!*/
+/*    font-family: 'Playfair Display', serif;
 /*    color: #5a5a5a;*/
 /*    margin-bottom: 10px;*/
-/*    font-weight: bold; !* 添加粗体样式 *!*/
+/*    font-weight: bold;
 /*}*/
 
 /*.quest-content {*/
@@ -433,17 +423,17 @@
     margin: 20px auto;
     padding: 20px;
     border-radius: 5px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.15); /* 轻微阴影以增强深度 */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
 }
 
 .quest {
     padding: 20px;
-    background-color: rgba(255, 255, 255, 0.5); /* 半透明背景，让羊皮纸纹理透出 */
+    background-color: rgba(255, 255, 255, 0.5);
     margin-bottom: 20px;
-    border: 1px solid #baa875; /* 边框颜色调整为更接近羊皮纸的颜色 */
+    border: 1px solid #baa875;
     border-radius: 10px;
     transition: transform 0.3s, box-shadow 0.3s;
-    color: #5a4634; /* 深棕色的文字 */
+    color: #5a4634;
 }
 
 .quest:hover {
@@ -456,24 +446,23 @@
 }
 
 .quest-name {
-    font-family: 'Cinzel', serif; /* 使用古典风格的字体 */
-    color: #5a4634; /* 深棕色的文字，与羊皮纸背景相协调 */
+    font-family: 'Cinzel', serif;
+    color: #5a4634;
     margin-bottom: 10px;
     font-weight: bold;
     font-size: 1.6em;
 }
 
 .quest-content {
-    text-indent: 2em; /* 首行缩进 */
+    text-indent: 2em;
 }
 
 .quest-name::before {
-    content: '✧'; /* 使用一个神秘的星形符号 */
+    content: '✧';
     padding-right: 10px;
-    color: #baa875; /* 金色调符号颜色 */
+    color: #baa875;
 }
 
-/* 为了增加更多的羊皮纸效果，可以添加一些纹理和装饰 */
 .quest-list::before {
     content: "";
     position: absolute;
@@ -486,22 +475,22 @@
     top: 0;
     left: 0;
     width: 100%;
-    background-color: rgba(128, 128, 128, 0.05); /* 灰色背景，半透明 */
+    background-color: rgba(128, 128, 128, 0.05);
     text-align: center;
     padding: 10px 0;
     font-size: 16px;
-    color: rgba(0, 0, 0, 0.7); /* 文本颜色半透明 */
-    z-index: 1000; /* 确保提示条位于页面元素上方 */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* 可选：为提示条添加阴影，增加立体感 */
+    color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .step-container {
-    display: flex; /* 设置为flex容器 */
-    flex-direction: column; /* 设置步骤在竖直方向上排列 */
-    justify-content: space-between; /* 步骤之间的空间平均分布 */
-    flex-wrap: nowrap; /* 防止步骤换行 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: nowrap;
     margin: 5px;
-    height: 100%; /* 设置一个高度，否则space-between可能无效 */
+    height: 100%;
 }
 
 .step {
@@ -509,12 +498,12 @@
     border: 1px solid #ddd;
     padding: 15px;
     border-radius: 4px;
-    margin-bottom: 10px; /* 步骤之间的竖直间隔 */
-    flex: 1; /* 所有步骤元素平均分配空间 */
+    margin-bottom: 10px;
+    flex: 1;
 }
 
 .step:last-child {
-    margin-bottom: 0; /* 最后一个步骤不需要底部边距 */
+    margin-bottom: 0;
 }
 
 .step-header {
@@ -532,62 +521,62 @@ a:hover {
 }
 
 .lg.secondary .gradio-btn {
-    text-align: center; /* 水平居中文本 */
+    text-align: center;
 }
 
 .lg.secondary .gradio-btn a {
-    color: black; /* 指定链接颜色 */
-    text-decoration: none; /* 移除下划线 */
+    color: black;
+    text-decoration: none;
 }
 
 .lg.secondary .gradio-btn a:visited {
-    color: black; /* 指定访问过的链接颜色 */
+    color: black;
 }
 
 .lg.secondary .gradio-btn a:hover {
-    color: gray; /* 指定鼠标悬停时链接颜色 */
+    color: gray;
 }
 
 .lg.secondary .gradio-btn a:active {
-    color: black; /* 指定被激活时链接颜色 */
+    color: black;
 }
 
 .lg.secondary .gradio-btn {
     display: flex;
-    justify-content: center; /* 水平居中 */
-    align-items: center; /* 垂直居中 */
-    height: 100%; /* 确定div高度，可能需要根据实际情况调整 */
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
 .lg.secondary .disabled-gradio-btn {
   cursor: not-allowed;
   opacity: .5;
   filter: grayscale(30%);
-  text-align: center; /* 水平居中文本 */
+  text-align: center;
 }
 
 .lg.secondary .disabled-gradio-btn {
-    text-align: center; /* 水平居中文本 */
+    text-align: center;
 }
 
 .lg.secondary .disabled-gradio-btn a {
-    color: black; /* 指定链接颜色 */
-    text-decoration: none; /* 移除下划线 */
+    color: black;
+    text-decoration: none;
 }
 
 .lg.secondary .disabled-gradio-btn a:visited {
-    color: black; /* 指定访问过的链接颜色 */
+    color: black;
 }
 
 .lg.secondary .disabled-gradio-btn a:active {
-    color: black; /* 指定被激活时链接颜色 */
+    color: black;
 }
 
 .lg.secondary .disabled-gradio-btn {
     display: flex;
-    justify-content: center; /* 水平居中 */
-    align-items: center; /* 垂直居中 */
-    height: 100%; /* 确定div高度，可能需要根据实际情况调整 */
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
 .full-width-anchor {
