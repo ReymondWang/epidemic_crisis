@@ -156,51 +156,116 @@ class Person(AgentBase):
 
 # 玩家
 class User(Person):
+    def __init__(
+            self,
+            name: str,
+            sys_prompt: str = None,
+            model_config_name: str = None,
+            infection: InfectionLevel = InfectionLevel.CLEAN,
+            resource: Resource = None,
+            virus: Virus = None,
+            avatar: str = "",
+            uid: str = None
+    ) -> None:
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+    
+    def set_medicine_status(self, medicine_status: dict):
+        self.medicine_status = medicine_status
+    
     def gen_random_resource(self):
         resourceType = random.randint(1, 3)
         resourceSum = random.randint(1, 9)
         # 生成食物
         if resourceType == 1:
-            print(self.name + " 获得随机数量食物：" + resourceSum)
+            print(self.name + " 获得随机数量食物：" + str(resourceSum))
             self.resource.inc_food(resourceSum)
         # 生成
         elif resourceType == 2:
-            print(self.name + " 获得随机口罩：" + resourceSum)
+            print(self.name + " 获得随机口罩：" + str(resourceSum))
             self.resource.inc_mask(resourceSum)
         else:
-            # FIXME 仅可获取已研发完成的药物
-            medicine_name = ""
+            avail_medicine_name = []
+            for key in self.medicine_status:
+                if self.medicine_status[key] == "Y":
+                    avail_medicine_name.append(key)    
+            medicine_name = avail_medicine_name[random.randint(0, len(avail_medicine_name) - 1)]
+        
             randint = random.randint(1, 9)
-            print(self.name + " 获得随机药品：" + medicine_name + " " + randint)
+            print(self.name + " 获得随机药品：" + medicine_name + " " + str(randint))
             self.resource.inc_medicine(medicine_name, randint)
+            
     def doResearch(self):
         pass
 
 
-
-
 #
 class MallStaff(Person):
+    def __init__(
+            self,
+            name: str,
+            sys_prompt: str = None,
+            model_config_name: str = None,
+            infection: InfectionLevel = InfectionLevel.CLEAN,
+            resource: Resource = None,
+            virus: Virus = None,
+            avatar: str = "",
+            uid: str = None
+    ) -> None:
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+    
     def gen_random_resource(self):
         randint = random.randint(1, 9)
-        print(self.name + " 获得随机数量食物：" + randint)
+        print(self.name + " 获得随机数量食物：" + str(randint))
         self.resource.inc_food(randint)
 
 
 class DrugstoreStaff(Person):
+    def __init__(
+            self,
+            name: str,
+            sys_prompt: str = None,
+            model_config_name: str = None,
+            infection: InfectionLevel = InfectionLevel.CLEAN,
+            resource: Resource = None,
+            virus: Virus = None,
+            avatar: str = "",
+            uid: str = None
+    ) -> None:
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+    
     def gen_random_resource(self):
         randint = random.randint(1, 9)
-        print(self.name + " 获得随机口罩：" + randint)
-        self.resource.inc_food(randint)
+        print(self.name + " 获得随机口罩：" + str(randint))
+        self.resource.inc_mask(randint)
 
 
 # NPC3 医生
 class Doctor(Person):
+    def __init__(
+            self,
+            name: str,
+            sys_prompt: str = None,
+            model_config_name: str = None,
+            infection: InfectionLevel = InfectionLevel.CLEAN,
+            resource: Resource = None,
+            virus: Virus = None,
+            avatar: str = "",
+            uid: str = None
+    ) -> None:
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+    
+    def set_medicine_status(self, medicine_status: dict):
+        self.medicine_status = medicine_status
+    
     def gen_random_resource(self):
-        # FIXME 仅可获取已研发完成的药物
-        medicine_name = ""
+        avail_medicine_name = []
+        for key in self.medicine_status:
+            if self.medicine_status[key] == "Y":
+                avail_medicine_name.append(key)    
+        medicine_name = avail_medicine_name[random.randint(0, len(avail_medicine_name) - 1)]
+        
         randint = random.randint(1, 9)
-        print(self.name + " 获得随机药品：" + medicine_name + " " + randint)
+        print(self.name + " 获得随机药品：" + medicine_name + " " + str(randint))
         self.resource.inc_medicine(medicine_name, randint)
 
 

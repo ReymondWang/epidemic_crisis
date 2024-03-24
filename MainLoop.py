@@ -125,6 +125,7 @@ def rand_infection(user: Person, npc_list: list, place_list: list):
     # 测试使用
     # place_list[0].infection = InfectionLevel.TINY
 
+
 def place_loop(place: Place, user: Person, uid):
     """
     针对场所的主要循环，负责用户和各个场所的互动。
@@ -215,7 +216,7 @@ def main_loop(args) -> None:
     send_chat_msg(game_description, uid=args.uid)
     
     round_menu_dict = {
-        "menu": ["查看状态", "研发药品", "采购物资", "与村民交谈"],
+        "menu": ["查看状态", "研发药品", "采购物资", "与村民交谈", "开始新回合"],
         "inspection": ["自己", "小美", "花姐", "凯哥"],
         "research": ["盘尼西林", "奥斯他韦", "RNA疫苗", "强力消毒液"],
         "place": ["百货商场", "大药房", "医院"],
@@ -311,6 +312,7 @@ def main_loop(args) -> None:
         avatar="./assets/npc3.jpg",
         uid=args.uid
     )
+    king.set_medicine_status(medicine_status)
     
     npc_dict = {
         "小美": beauty,
@@ -328,12 +330,16 @@ def main_loop(args) -> None:
         avatar="./assets/user.jpg",
         uid=args.uid
     )
+    user.set_medicine_status(medicine_status)
+    
     for person in person_list :
         person.relations = [Relation(person, user, RelationLevel.STRANGE)]
         user.relations.append(Relation(user, person, RelationLevel.STRANGE))
     #----人员Agent end----
     
     #------游戏开始------
+    systemAgent.set_person([user, beauty, flower, king])
+    
     rand_infection(user=user, npc_list=[beauty, flower, king], place_list=[mall, pharmacy, hospital])
     
     msg = systemAgent.begin_new_round()

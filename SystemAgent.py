@@ -25,6 +25,11 @@ class SystemAgent(AgentBase):
         self.engine = PromptEngine(self.model, prompt_type=PromptType.LIST)
         self.round_menu_dict = round_menu_dict
         self.uid = uid
+    
+    
+    def set_person(self, person_list: list):
+        self.person_list = person_list
+    
         
     def reply(self, x: dict = None) -> dict:
         if x is not None:
@@ -35,11 +40,10 @@ class SystemAgent(AgentBase):
         while True:
             try:
                 print(x)
-                if x == {"content": "新回合开始"} and content == "":
-                    self.begin_new_round()
-                    continue
-                elif isinstance(x, dict):
-                    if x.get("content") == "查看状态" and content == "":
+                if isinstance(x, dict):
+                    if x.get("content") == "开始新回合" and content == "":
+                        return self.begin_new_round()
+                    elif x.get("content") == "查看状态" and content == "":
                         return self.show_inspection_menu()
                     elif x.get("content") == "研发药品" and content == "":
                         return self.show_research_menu()
@@ -88,6 +92,10 @@ class SystemAgent(AgentBase):
     
     
     def begin_new_round(self) -> Msg:
+        if self.person_list:
+            for person in self.person_list:
+                person.gen_random_resource()
+        
         start_hint = "请生成一个温馨的早上的描述画面，300字以内。"
         
         prompt = self.engine.join(

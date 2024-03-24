@@ -1,9 +1,9 @@
 class Resource(object):
-    def __init__(self, food=0, mask=0, medicine={}) -> None:
+    def __init__(self, food=0, mask=0) -> None:
         super().__init__()
         self.food = food
         self.mask = mask
-        self.medicine = medicine
+        self.medicine = {}
     
     def inc_food(self, cnt):
         self.food += cnt
