@@ -30,12 +30,14 @@ class Resource(object):
         return self.mask
     
     def inc_medicine(self, med_name, cnt):
+        print("----name:" + med_name + "; 增加:" + str(cnt) + "----")
         if med_name not in self.medicine:
             self.medicine[med_name] = cnt
         else:
             self.medicine[med_name] += cnt
             
     def dec_medicine(self, med_name, cnt=1):
+        print("----name:" + med_name + "; 减少:" + str(cnt) + "----")
         if med_name not in self.medicine:
             raise Exception("Medicine[" + med_name + "] is not in the dict .")
         elif self.medicine[med_name] < cnt:
@@ -62,7 +64,7 @@ if __name__ == "__main__":
     # resource.dec_mask()
     # print(resource.get_mask())
     
-    resource.inc_medicine("penicillin", 1)
-    print(resource.get_medicine("penicillin"))
-    resource.dec_medicine("penicillin")
-    print(resource.get_medicine("penicillin"))
+    resource.inc_medicine("强力消毒液", 1)
+    print(resource.get_medicine("强力消毒液"))
+    resource.dec_medicine("强力消毒液")
+    print(resource.get_medicine("强力消毒液"))

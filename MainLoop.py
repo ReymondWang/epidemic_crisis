@@ -2,6 +2,7 @@ import time
 import json
 import inquirer
 import sys
+from random import randint
 from SystemAgent import SystemAgent
 from Resource import Resource
 from Virus import Virus
@@ -17,9 +18,9 @@ from Relation import Relation
 #----定义药品相关的信息 start----
 medicine_status = {
     "盘尼西林": "Y",
-    "奥斯他韦": "N",
-    "RNA疫苗": "N",
-    "强力消毒液": "N"
+    "奥斯他韦": "Y",
+    "RNA疫苗": "Y",
+    "强力消毒液": "Y"
 }
 
 penicillin = Medicine(
@@ -106,6 +107,20 @@ people_virus = Virus(
 
 #----定义主要环节的互动方法 start----
 
+def rand_infection(user: Person, npc_list: list, place_list: list):
+    """
+    游戏开始时随机感染个人或地方
+    """
+    idx = randint(1, 7)
+    if idx == 1:
+        user.infection = InfectionLevel.TINY
+    elif idx >= 2 and idx <= 4:
+        npc_list[idx - 2].infection = InfectionLevel.TINY
+    else:
+        place_list[idx - 5].infection = InfectionLevel.TINY
+    # 测试使用
+    # place_list[0].infection = InfectionLevel.TINY
+
 def place_loop(place: Place, user: Person, uid):
     """
     针对场所的主要循环，负责用户和各个场所的互动。
@@ -115,7 +130,14 @@ def place_loop(place: Place, user: Person, uid):
     while True:
         msg = place(msg)
         if msg.get("content") == "***kill_virus***":
-            show_available_medicine(uid)
+            medicine_name = show_available_medicine(uid)
+            if user.resource.get_medicine(medicine_name) > 0:
+                san_res = place.sanitize(medicine_dic[medicine_name])
+                if san_res:
+                    user.resource.dec_medicine(medicine_name, cnt=1)
+            else:
+                send_chat_msg(f" {SYS_MSG_PREFIX}您没有要使用的药物。", uid=uid)
+            break
         elif msg.get("content") == "***end***":
             break
         elif isinstance(msg.get("content"), dict):
@@ -142,7 +164,7 @@ def inspection_loop(person: Person, uid, SystemAgent):
     return SystemAgent.show_main_menu()
 
 
-def show_available_medicine(uid):
+def show_available_medicine(uid) -> str:
     """
     显示用户当前可以使用的药品
     """
@@ -170,7 +192,7 @@ def show_available_medicine(uid):
     send_chat_msg("**end_choosing**", uid=uid)
     send_player_msg(msg=medicine[0], uid=uid)
     
-    return Msg(name="user", content=medicine[0])
+    return medicine[0]
             
 #----定义主要环节的互动方法 start----
 
@@ -195,9 +217,7 @@ def main_loop(args) -> None:
         "place": ["百货商场", "大药房", "医院"],
         "talking": ["小美", "花姐", "凯哥"]
     }
-    
-    
-    
+      
     #----系统Agent start----
     systemAgent = SystemAgent(
         name="小精灵", 
@@ -308,6 +328,9 @@ def main_loop(args) -> None:
         person.relations = [Relation(person, user, RelationLevel.STRANGE)]
         user.relations.append(Relation(user, person, RelationLevel.STRANGE))
     #----人员Agent end----
+    
+    #------游戏开始------
+    rand_infection(user=user, npc_list=[beauty, flower, king], place_list=[mall, pharmacy, hospital])
     
     msg = systemAgent.begin_new_round()
     while True:

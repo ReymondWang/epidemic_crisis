@@ -97,6 +97,15 @@ class Place(AgentBase):
         return user_input
     
     
+    def send_chat_no_reply(self, hint):
+        prompt = self.engine.join(
+            self.sys_prompt + hint,
+            self.memory.get_memory()
+        )
+        response = self.model(prompt, max=3)
+        send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+    
+    
     def get_number(self, content) -> dict:
         hint = f"""现在需要从一句话中获取用户想要购买东西的数量。
         例子1
@@ -184,21 +193,28 @@ class Place(AgentBase):
             print(f"Description: {self.virus.description}")
 
 
-    def sanitize(self, medicine: Medicine):
+    def sanitize(self, medicine: Medicine) -> Msg:
         # 实现对 infection 的控制，根据药物的 effect 对 infection 进行减少
+        if medicine.name not in ["强力消毒液"]:
+            self.send_chat_no_reply(hint= f"解释一下，场所消杀不能使用人吃的药物，50字以内。")
+            return False
+        
         reduction = {
             EffectLevel.POOR: 1,
             EffectLevel.COMMON: 2,
             EffectLevel.GOOD: 4
         }
+        res = False
         if self.infection.value > 0:
             self.infection -= reduction[medicine.effect]
             if self.infection < 0:
                 self.infection = 0
-            return True
+            res = True
+        if res:
+            self.send_chat_no_reply(hint= f"你的感染的到了缓解，说一句感谢的话，50字以内。")
         else:
-            print(f"The {self.background}) is clean, you don't need to use medicine to sanitize it.")
-            return False
+            self.send_chat_no_reply(hint= f"强调你并没有被感染，不需要病毒消杀，50字以内。")
+        return res
 
 
     def infect(self, person: Person):
