@@ -150,8 +150,8 @@ class SystemAgent(AgentBase):
             person = sel_person
             break
         send_chat_msg("**end_choosing**", uid=self.uid)
-        
-        return Msg(name="user", content=person[0])
+        content = '查看状态：'+ person[0]
+        return Msg(name="user", content=content)
     
     
     def show_research_menu(self) -> Msg:
@@ -179,7 +179,7 @@ class SystemAgent(AgentBase):
             medicine = sel_medicine
             break
         send_chat_msg("**end_choosing**", uid=self.uid)
-        
+
         return Msg(name="user", content=medicine[0])
     
     
@@ -237,8 +237,8 @@ class SystemAgent(AgentBase):
             talk = sel_talk
             break
         send_chat_msg("**end_choosing**", uid=self.uid)
-        
-        return Msg(name="user", content=talk[0])
+        content = '交谈：' +  talk[0]
+        return Msg(name="user", content=content)
     
     
 if __name__ == "__main__":
