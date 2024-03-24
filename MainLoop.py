@@ -18,9 +18,9 @@ from Relation import Relation
 #----定义药品相关的信息 start----
 medicine_status = {
     "盘尼西林": "Y",
-    "奥斯他韦": "N",
-    "RNA疫苗": "N",
-    "强力消毒液": "N"
+    "奥斯他韦": "Y",
+    "RNA疫苗": "Y",
+    "强力消毒液": "Y"
 }
 
 penicillin = Medicine(

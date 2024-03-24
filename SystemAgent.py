@@ -28,6 +28,7 @@ class SystemAgent(AgentBase):
     
     
     def set_person(self, person_list: list):
+        print(person_list)
         self.person_list = person_list
     
         
@@ -51,7 +52,7 @@ class SystemAgent(AgentBase):
                         return self.show_place_menu()
                     elif x.get("content") == "与村民交谈" and content == "":
                         return self.show_talk_menu()
-                    elif x.get("content") == "主菜单" and content == "":
+                    elif "主菜单" in x.get("content") and content == "":
                         return self.show_main_menu()
                     elif x.get("content") == "百货商场" and content == "":
                         content = "百货商场"
@@ -92,10 +93,9 @@ class SystemAgent(AgentBase):
     
     
     def begin_new_round(self) -> Msg:
-        if self.person_list:
-            for person in self.person_list:
-                person.gen_random_resource()
-        
+        for person in self.person_list:
+            person.gen_random_resource()
+            
         start_hint = "请生成一个温馨的早上的描述画面，300字以内。"
         
         prompt = self.engine.join(

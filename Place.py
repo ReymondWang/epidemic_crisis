@@ -96,7 +96,6 @@ class Place(AgentBase):
         user_input = get_player_input(uid=self.uid)
         return user_input
     
-    
     def send_chat_no_reply(self, hint):
         prompt = self.engine.join(
             self.sys_prompt + hint,
@@ -105,18 +104,17 @@ class Place(AgentBase):
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
     
-    
     def get_number(self, content) -> dict:
         hint = f"""现在需要从一句话中获取用户想要购买东西的数量。
         例子1
         我要购买10个食物
-        食物10
+        食物:10
         例子2
         我要购买5个口罩
-        口罩5
+        口罩:5
         例子3
         我要购买5盒盘尼西林
-        盘尼西林5
+        盘尼西林:5
         请用以下格式返回
         名称:数量
         """
@@ -144,7 +142,6 @@ class Place(AgentBase):
         
         return res
         
-    
     def welcome(self) -> Msg:
         start_hint = "请生成一段欢迎词，100字以内。"
 
@@ -155,7 +152,6 @@ class Place(AgentBase):
 
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
-
 
     def show_main_menu(self) -> Msg:
         choose_menu = f""" {SYS_MSG_PREFIX}请选择想要进行的事项: <select-box shape="card"
@@ -181,7 +177,6 @@ class Place(AgentBase):
 
         return Msg(name="user", content=menu[0])
 
-
     def display_info(self):
         print(f"Infection Level: {self.infection}")
         print(f"Resource-food: {self.resource.food}")
@@ -191,7 +186,6 @@ class Place(AgentBase):
             print("Virus Info:")
             print(f"Name: {self.virus.name}")
             print(f"Description: {self.virus.description}")
-
 
     def sanitize(self, medicine: Medicine) -> Msg:
         # 实现对 infection 的控制，根据药物的 effect 对 infection 进行减少
@@ -215,7 +209,6 @@ class Place(AgentBase):
         else:
             self.send_chat_no_reply(hint= f"强调你并没有被感染，不需要病毒消杀，50字以内。")
         return res
-
 
     def infect(self, person: Person):
         # 判定来到场所的人是否会感染病毒
