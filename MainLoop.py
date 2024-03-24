@@ -9,10 +9,6 @@ from Virus import Virus
 from Place import Place
 from Medicine import Medicine
 from Person import Person
-from Person import User
-from Person import MallStaff
-from Person import DrugstoreStaff
-from Person import Doctor
 from enums import InfectionLevel, EffectLevel, RelationLevel
 from utils import SYS_MSG_PREFIX
 from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input
@@ -22,9 +18,9 @@ from Relation import Relation
 #----定义药品相关的信息 start----
 medicine_status = {
     "盘尼西林": "Y",
-    "奥斯他韦": "Y",
-    "RNA疫苗": "Y",
-    "强力消毒液": "Y"
+    "奥斯他韦": "N",
+    "RNA疫苗": "N",
+    "强力消毒液": "N"
 }
 
 penicillin = Medicine(
@@ -135,14 +131,7 @@ def place_loop(place: Place, user: Person, uid):
     while True:
         msg = place(msg)
         if msg.get("content") == "***kill_virus***":
-            medicine_name = show_available_medicine(uid)
-            if user.resource.get_medicine(medicine_name) > 0:
-                san_res = place.sanitize(medicine_dic[medicine_name])
-                if san_res:
-                    user.resource.dec_medicine(medicine_name, cnt=1)
-            else:
-                send_chat_msg(f" {SYS_MSG_PREFIX}您没有要使用的药物。", uid=uid)
-            break
+            show_available_medicine(uid)
         elif msg.get("content") == "***end***":
             break
         elif isinstance(msg.get("content"), dict):
@@ -169,7 +158,40 @@ def inspection_loop(person: Person, uid, SystemAgent):
     return SystemAgent.show_main_menu()
 
 
-def show_available_medicine(uid) -> str:
+def talk_loop(person: Person, user: Person, uid, SystemAgent):
+    """
+    针对人员对话的主要循环，负责用户与各个角色，并根据对话结果提升亲密度。
+    """
+    msg = person.welcome()
+    Assistance_Msg = f"""
+                    {SYS_MSG_PREFIX}您当前与{person.name}的关系为：{person.relations[0].level.name}\n
+                    如果您想结束当前对话请输入：结束对话
+                    """
+    send_chat_msg(Assistance_Msg, uid=uid)
+    while True:
+        msg = Msg(name='user',content=get_player_input(uid=user.uid))
+        if msg.get("content") == '结束对话' :
+            break
+        else:
+            msg = person(msg)
+    relation_hint = f"""
+                    请根据你和玩家的对话记忆，判断目前你和玩家的关系的亲密程度，亲密程度包含四个等级，四个等级的亲密程度是依次递增的，
+                    分别是"STRANGE,COMMON,FAMILIAR,INTIMATE"，
+                    你需要告诉我的内容是"STRANGE,COMMON,FAMILIAR,INTIMATE"其中的一个，不要包含其他无关的信息。
+                    """
+    prompt = person.engine.join(
+            relation_hint,
+        person.memory.get_memory()
+    )
+    response = person.model(prompt, max=3)
+    person.relations[0].level = RelationLevel[response.text]
+    for relation in user.relations:
+        if relation.person2.name == person.name:
+            relation.level = RelationLevel[response.text]
+    return SystemAgent.show_main_menu()
+
+
+def show_available_medicine(uid):
     """
     显示用户当前可以使用的药品
     """
@@ -197,7 +219,7 @@ def show_available_medicine(uid) -> str:
     send_chat_msg("**end_choosing**", uid=uid)
     send_player_msg(msg=medicine[0], uid=uid)
     
-    return medicine[0]
+    return Msg(name="user", content=medicine[0])
             
 #----定义主要环节的互动方法 start----
 
@@ -222,7 +244,7 @@ def main_loop(args) -> None:
         "place": ["百货商场", "大药房", "医院"],
         "talking": ["小美", "花姐", "凯哥"]
     }
-      
+    
     #----系统Agent start----
     systemAgent = SystemAgent(
         name="小精灵", 
@@ -283,7 +305,7 @@ def main_loop(args) -> None:
     #----场所Agent end----
     
     #----人员Agent start----
-    beauty = MallStaff(
+    beauty = Person(
         name="小美",
         model_config_name="qwen_72b",
         sys_prompt="你是一个心地善良的女生，性格活泼开朗，曾经在百货商场上过一段时间班。",
@@ -293,7 +315,7 @@ def main_loop(args) -> None:
         uid=args.uid
     )
     
-    flower = DrugstoreStaff(
+    flower = Person(
         name="花姐",
         model_config_name="qwen_72b",
         sys_prompt="你是一个中年女性，随让脾气有些刻板，但是生活很幸福，曾经在大药房上过一段时间班。",
@@ -303,7 +325,7 @@ def main_loop(args) -> None:
         uid=args.uid
     )
     
-    king = Doctor(
+    king = Person(
         name="凯哥",
         model_config_name="qwen_72b",
         sys_prompt="你是一个中年男性，是一个竟然非常丰富的内科医生，曾经有一个女儿，但是很不幸两年前离婚了，女儿跟着妈妈走了。",
@@ -321,10 +343,10 @@ def main_loop(args) -> None:
     }
     
     person_list = [beauty, flower, king]
-    user = User(
+    user = Person(
         name="玩家",
         model_config_name="qwen_72b",
-        sys_prompt="你是游戏用户在该游戏里的化身，是一名科学家，能够研发出新的药品对付病毒。",
+        sys_prompt="你是游戏玩家在该游戏里的化身，是一名科学家，能够研发出新的药品对付病毒。",
         resource=Resource(),
         virus=people_virus,
         avatar="./assets/user.jpg",
@@ -349,8 +371,12 @@ def main_loop(args) -> None:
         if content in place_dic:
             msg = place_loop(place_dic[content], user, uid=args.uid)
 
-        if content in npc_dict :
-            msg = inspection_loop(npc_dict[content], uid=args.uid, SystemAgent=systemAgent)
+        if '查看状态' in content:
+            if content[5:] in npc_dict :
+                msg = inspection_loop(npc_dict[content[5:]], uid=args.uid, SystemAgent=systemAgent)
+            if content[5:] == '自己' :
+                msg = inspection_loop(user, uid=args.uid, SystemAgent=systemAgent)
 
-        if content == '自己' :
-            msg = inspection_loop(user, uid=args.uid, SystemAgent=systemAgent)
+        if '交谈' in content:
+            if content[3:] in npc_dict :
+                msg = talk_loop(npc_dict[content[3:]], user, uid=args.uid, SystemAgent=systemAgent)
