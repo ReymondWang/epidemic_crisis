@@ -116,7 +116,14 @@ def place_loop(place: Place, user: Person, uid):
     while True:
         msg = place(msg)
         if msg.get("content") == "***kill_virus***":
-            show_available_medicine(uid)
+            medicine_name = show_available_medicine(uid)
+            if user.resource.get_medicine(medicine_name) > 0:
+                san_res = place.sanitize(medicine_dic[medicine_name])
+                if san_res:
+                    user.resource.dec_medicine(medicine_name, cnt=1)
+            else:
+                send_chat_msg(f" {SYS_MSG_PREFIX}您没有要使用的药物。", uid=uid)
+            break
         elif msg.get("content") == "***end***":
             break
         elif isinstance(msg.get("content"), dict):
@@ -204,7 +211,7 @@ def show_available_medicine(uid):
     send_chat_msg("**end_choosing**", uid=uid)
     send_player_msg(msg=medicine[0], uid=uid)
     
-    return Msg(name="user", content=medicine[0])
+    return medicine[0]
             
 #----定义主要环节的互动方法 start----
 
