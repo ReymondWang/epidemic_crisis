@@ -286,7 +286,8 @@ if __name__ == "__main__":
         resume_button.click(game_ui, outputs=[tabs, game_tabs])
         return_welcome_button.click(welcome_ui, outputs=[tabs, game_tabs])
 
-        new_button.click(send_reset_message, inputs=[uuid]).then(check_for_new_session, inputs=[uuid])
+        # new_button.click(send_reset_message, inputs=[uuid]).then(check_for_new_session, inputs=[uuid])
+        new_button.click(check_for_new_session, inputs=[uuid])
         resume_button.click(check_for_new_session, inputs=[uuid])
 
         send_button.click(

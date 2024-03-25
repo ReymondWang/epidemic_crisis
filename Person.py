@@ -233,7 +233,7 @@ class User(Person):
         pass
 
 
-#
+# NPC1，拥有商场职员背景
 class MallStaff(Person):
     def __init__(
             self,
@@ -254,6 +254,7 @@ class MallStaff(Person):
         self.resource.inc_food(randint)
 
 
+# NPC2，拥有药店职员背景
 class DrugstoreStaff(Person):
     def __init__(
             self,
@@ -274,7 +275,7 @@ class DrugstoreStaff(Person):
         self.resource.inc_mask(randint)
 
 
-# NPC3 医生
+# NPC3 拥有医生背景
 class Doctor(Person):
     def __init__(
             self,

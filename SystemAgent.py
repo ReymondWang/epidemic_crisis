@@ -1,16 +1,17 @@
 import time
 import json
-import inquirer
 
 from agentscope.agents import AgentBase
 from agentscope.prompt import PromptType, PromptEngine
 from agentscope.message import Msg
-from typing import Optional, Any
+from typing import Optional
+from random import randint
 from loguru import logger
 from utils import send_chat_msg, get_player_input, query_answer
 from utils import SYS_MSG_PREFIX
 from utils import ResetException
-
+from Person import Person, User, MallStaff, DrugstoreStaff, Doctor
+from enums import InfectionLevel
 
 class SystemAgent(AgentBase):
     def __init__(
@@ -26,12 +27,23 @@ class SystemAgent(AgentBase):
         self.round_menu_dict = round_menu_dict
         self.uid = uid
     
-    
-    def set_person(self, person_list: list):
-        print(person_list)
+    def set_role_list(self, user: User, person_list: list, place_list: list):
+        self.user = user
         self.person_list = person_list
-    
-        
+        self.place_list = place_list
+
+    def rand_infection(self):
+        """
+        游戏开始时随机感染个人或地方
+        """
+        idx = randint(1, 7)
+        if idx == 1:
+            self.user.infection = InfectionLevel.TINY
+        elif idx >= 2 and idx <= 4:
+            self.person_list[idx - 2].infection = InfectionLevel.TINY
+        else:
+            self.place_list[idx - 5].infection = InfectionLevel.TINY
+
     def reply(self, x: dict = None) -> dict:
         if x is not None:
             self.memory.add(x)
@@ -83,7 +95,6 @@ class SystemAgent(AgentBase):
         )
         return msg
     
-    
     def is_content_valid(self, content) -> bool:
         total_valid = ["主菜单"]
         for key in self.round_menu_dict:
@@ -91,8 +102,8 @@ class SystemAgent(AgentBase):
                 total_valid.append(item)
         return content in total_valid
     
-    
     def begin_new_round(self) -> Msg:
+        self.user.gen_random_resource()
         for person in self.person_list:
             person.gen_random_resource()
             
@@ -108,7 +119,6 @@ class SystemAgent(AgentBase):
         
         return self.show_main_menu()
         
-    
     def show_main_menu(self) -> Msg:
         choose_menu = f""" {SYS_MSG_PREFIX}请选择想要进行的事项: <select-box shape="card"
                     type="checkbox" item-width="auto"
@@ -131,8 +141,7 @@ class SystemAgent(AgentBase):
         send_chat_msg("**end_choosing**", uid=self.uid)
         
         return Msg(name="user", content=menu[0])
-    
-    
+     
     def show_inspection_menu(self) -> Msg:
         person_list = self.round_menu_dict["inspection"]
         if "主菜单" not in person_list:
@@ -160,8 +169,7 @@ class SystemAgent(AgentBase):
         send_chat_msg("**end_choosing**", uid=self.uid)
         content = '查看状态：'+ person[0]
         return Msg(name="user", content=content)
-    
-    
+      
     def show_research_menu(self) -> Msg:
         medicine_list = self.round_menu_dict["research"]
         if "主菜单" not in medicine_list:
@@ -189,7 +197,6 @@ class SystemAgent(AgentBase):
         send_chat_msg("**end_choosing**", uid=self.uid)
         
         return Msg(name="user", content=medicine[0])
-    
     
     def show_place_menu(self) -> Msg:
         place_list = self.round_menu_dict["place"]
@@ -219,7 +226,6 @@ class SystemAgent(AgentBase):
         
         return Msg(name="user", content=place[0])
     
-    
     def show_talk_menu(self) -> Msg:
         talk_list = self.round_menu_dict["talking"]
         if "主菜单" not in talk_list:
@@ -247,7 +253,6 @@ class SystemAgent(AgentBase):
         send_chat_msg("**end_choosing**", uid=self.uid)
         content = '交谈：' +  talk[0]
         return Msg(name="user", content=content)
-    
     
 if __name__ == "__main__":
     round_menu_dict = {
