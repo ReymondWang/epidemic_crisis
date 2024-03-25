@@ -5,36 +5,11 @@ from Resource import Resource
 from Virus import Virus
 from agentscope.message import Msg
 from utils import send_chat_msg
+from utils import SYS_MSG_PREFIX
+from utils import HealthLevel_TEXT, InfectionLevel_TEXT, WearingMask_TEXT, RelationLevel_TEXT
 from agentscope.prompt import PromptType, PromptEngine
 import time
 import random
-
-InfectionLevel_TEXT = {
-    0: "Clean",
-    1: "Tiny",
-    2: "Common",
-    3: "Serious",
-    4: "Critical",
-    5: "Dead"
-}
-HealthLevel_TEXT = {
-    5: "Perfect",
-    4: "Good",
-    3: "Common",
-    2: "Bad",
-    1: "Poor",
-    0: "Dead"
-}
-WearingMask_TEXT = {
-    True: "已佩戴",
-    False: "未佩戴"
-}
-RelationLevel_TEXT = {
-    1: "STRANGE",
-    2: "COMMON",
-    3: "FAMILIAR",
-    4: "INTIMATE"
-}
 
 class Person(AgentBase):
     def __init__(
@@ -66,7 +41,17 @@ class Person(AgentBase):
         self.relations = []
          
     def die(self):
-        pass
+        if self.physicalHealth == HealthLevel.DEAD:
+            send_chat_msg(f" {SYS_MSG_PREFIX}{self.name}因饥饿而死亡。", uid=self.uid)
+            self.isDead = True
+        elif self.mindHealth == HealthLevel.DEAD:
+            send_chat_msg(f" {SYS_MSG_PREFIX}{self.name}因心理不健康而自杀。", uid=self.uid)
+            self.isDead = True
+        elif self.infection == InfectionLevel.DEAD:
+            send_chat_msg(f" {SYS_MSG_PREFIX}{self.name}因感染{self.virus.name}而死亡。", uid=self.uid)
+            self.isDead = True
+        else:
+            self.isDead = False
      
     def self_introduction(self):
         start_hint = "请生成一段自我介绍，100字以内。"
@@ -188,6 +173,10 @@ class Person(AgentBase):
     
     def set_medicine_status(self, medicine_status):
         self.medicine_status = medicine_status
+
+    def virus_growing(self):
+        if self.infection != InfectionLevel.CLEAN and self.infection != InfectionLevel.DEAD:
+            self.infection = InfectionLevel(self.infection + 1)
 
 # 玩家
 class User(Person):

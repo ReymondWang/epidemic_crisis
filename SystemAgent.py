@@ -9,6 +9,7 @@ from random import randint
 from loguru import logger
 from utils import send_chat_msg, get_player_input, query_answer
 from utils import SYS_MSG_PREFIX
+from utils import InfectionLevel_TEXT
 from utils import ResetException
 from Person import Person, User, MallStaff, DrugstoreStaff, Doctor
 from enums import InfectionLevel
@@ -39,10 +40,13 @@ class SystemAgent(AgentBase):
         idx = randint(1, 7)
         if idx == 1:
             self.user.infection = InfectionLevel.TINY
+            print("----" + self.user.name + "被感染，当前感染等级" + InfectionLevel_TEXT[InfectionLevel.TINY] + "----")
         elif idx >= 2 and idx <= 4:
             self.person_list[idx - 2].infection = InfectionLevel.TINY
+            print("----" + self.person_list[idx - 2].name + "被感染，当前感染等级" + InfectionLevel_TEXT[InfectionLevel.TINY] + "----")
         else:
             self.place_list[idx - 5].infection = InfectionLevel.TINY
+            print("----" + self.place_list[idx - 5].name + "被感染，当前感染等级" + InfectionLevel_TEXT[InfectionLevel.TINY] + "----")
 
     def reply(self, x: dict = None) -> dict:
         if x is not None:
@@ -104,20 +108,33 @@ class SystemAgent(AgentBase):
     
     def begin_new_round(self) -> Msg:
         self.user.gen_random_resource()
+        self.user.virus_growing()
+        self.user.die()
         for person in self.person_list:
             person.gen_random_resource()
-            
-        start_hint = "请生成一个温馨的早上的描述画面，300字以内。"
-        
-        prompt = self.engine.join(
-            self.sys_prompt + start_hint,
-            self.memory.get_memory()
-        )
-        
-        response = self.model(prompt, max=3)
-        send_chat_msg(response.text, role="小精灵", uid=self.uid, avatar="./assets/system.png")
-        
-        return self.show_main_menu()
+            person.virus_growing()
+            person.die()
+        for place in self.place_list:
+            place.virus_growing()
+
+        if self.user.isDead:
+            dead_hint = "主角已经死亡，请生成一段游戏失败的文字，300字以内"
+            prompt = self.engine.join(
+                self.sys_prompt + dead_hint,
+                self.memory.get_memory()
+            )
+            response = self.model(prompt, max=3)
+            send_chat_msg(response.text, role="小精灵", uid=self.uid, avatar="./assets/system.png")
+            return Msg(name="user", content="***game over***")
+        else:
+            start_hint = "请生成一个温馨的早上的描述画面，300字以内。"
+            prompt = self.engine.join(
+                self.sys_prompt + start_hint,
+                self.memory.get_memory()
+            )
+            response = self.model(prompt, max=3)
+            send_chat_msg(response.text, role="小精灵", uid=self.uid, avatar="./assets/system.png")
+            return self.show_main_menu()
         
     def show_main_menu(self) -> Msg:
         choose_menu = f""" {SYS_MSG_PREFIX}请选择想要进行的事项: <select-box shape="card"
@@ -162,6 +179,9 @@ class SystemAgent(AgentBase):
         while True:
             sel_person = get_player_input(uid=self.uid)
             if isinstance(sel_person, str):
+                send_chat_msg(f" {SYS_MSG_PREFIX}请在列表中进行选择。", uid=self.uid)
+                continue
+            elif sel_person[0] not in person_list:
                 send_chat_msg(f" {SYS_MSG_PREFIX}请在列表中进行选择。", uid=self.uid)
                 continue
             person = sel_person

@@ -2,7 +2,7 @@ import time
 import json
 import inquirer
 import sys
-from random import randint
+from random import randint, random
 from SystemAgent import SystemAgent
 from Resource import Resource
 from Virus import Virus
@@ -11,6 +11,7 @@ from Medicine import Medicine
 from Person import Person, MallStaff, DrugstoreStaff, Doctor, User
 from enums import InfectionLevel, EffectLevel, RelationLevel
 from utils import SYS_MSG_PREFIX
+from utils import InfectionLevel_TEXT
 from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input
 from agentscope.message import Msg
 from Relation import Relation
@@ -107,11 +108,41 @@ people_virus = Virus(
 
 #----定义主要环节的互动方法 start----
 
+def infect(obj1: any, obj2: any):
+    source = None
+    target = None
+
+    infection1 = obj1.infection
+    infection2 = obj2.infection
+    if infection1 != InfectionLevel.CLEAN and infection2 == InfectionLevel.CLEAN:
+        source = obj1
+        target = obj2
+    elif infection1 == InfectionLevel.CLEAN and infection2 != InfectionLevel.CLEAN:
+        source = obj2
+        target = obj1
+    
+    if source != None and target != None:
+        infection_chance = {
+            InfectionLevel.CLEAN: 0,
+            InfectionLevel.TINY: 0.2,
+            InfectionLevel.COMMON: 0.4,
+            InfectionLevel.SERIOUS: 0.6,
+            InfectionLevel.CRITICAL: 0.8,
+            InfectionLevel.DEAD: 1
+        }
+        chance = infection_chance[source.infection]
+        if random() < chance:
+            print(f"----{target.name}被{source.name}感染了病毒，当前的感染等级为{InfectionLevel_TEXT[InfectionLevel.TINY]}----")
+            target.infection = InfectionLevel.TINY
+    
+
 def place_loop(place: Place, user: Person, uid):
     """
     针对场所的主要循环，负责用户和各个场所的互动。
     """
     place.welcome()
+    infect(place, user)
+    
     msg = place.show_main_menu()
     while True:
         msg = place(msg)
@@ -155,6 +186,7 @@ def talk_loop(person: Person, user: Person, uid, SystemAgent):
     针对人员对话的主要循环，负责用户与各个角色，并根据对话结果提升亲密度。
     """
     msg = person.welcome()
+    infect(person, user)
     Assistance_Msg = f"""
                     {SYS_MSG_PREFIX}您当前与{person.name}的关系为：{person.relations[0].level.name}\n
                     如果您想结束当前对话请输入：结束对话
@@ -176,10 +208,11 @@ def talk_loop(person: Person, user: Person, uid, SystemAgent):
         person.memory.get_memory()
     )
     response = person.model(prompt, max=3)
-    person.relations[0].level = RelationLevel[response.text]
-    for relation in user.relations:
-        if relation.person2.name == person.name:
-            relation.level = RelationLevel[response.text]
+    if response.text in ["STRANGE", "COMMON", "FAMILIAR", "INTIMATE"]:
+        person.relations[0].level = RelationLevel[response.text]
+        for relation in user.relations:
+            if relation.person2.name == person.name:
+                relation.level = RelationLevel[response.text]
     return SystemAgent.show_main_menu()
 
 
@@ -359,15 +392,15 @@ def main_loop(args) -> None:
     while True:
         msg = systemAgent(msg)
         content = msg.get("content")
+        if content == "***game over***":
+            break
         if content in place_dic:
             msg = place_loop(place_dic[content], user, uid=args.uid)
-
         if '查看状态' in content:
             if content[5:] in npc_dict :
                 msg = inspection_loop(npc_dict[content[5:]], uid=args.uid, SystemAgent=systemAgent)
             if content[5:] == '自己' :
                 msg = inspection_loop(user, uid=args.uid, SystemAgent=systemAgent)
-
         if '交谈' in content:
             if content[3:] in npc_dict :
                 msg = talk_loop(npc_dict[content[3:]], user, uid=args.uid, SystemAgent=systemAgent)

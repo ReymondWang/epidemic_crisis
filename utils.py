@@ -9,12 +9,38 @@ from typing import List
 SYS_MSG_PREFIX = '【系统】'
 DEFAULT_AGENT_IMG_DIR = "./assets/"
 
+InfectionLevel_TEXT = {
+    0: "无",
+    1: "轻微",
+    2: "一般",
+    3: "严重",
+    4: "非常严重",
+    5: "致死"
+}
+HealthLevel_TEXT = {
+    5: "非常好",
+    4: "好",
+    3: "一般",
+    2: "差",
+    1: "特别差",
+    0: "死亡"
+}
+WearingMask_TEXT = {
+    True: "已佩戴",
+    False: "未佩戴"
+}
+RelationLevel_TEXT = {
+    1: "陌生",
+    2: "普通",
+    3: "熟悉",
+    4: "亲密"
+}
+
 def init_uid_queues():
     return {
         "glb_queue_chat_msg": Queue(),
         "glb_queue_chat_input": Queue(),
     }
-
 
 glb_uid_dict = defaultdict(init_uid_queues)
 
@@ -119,7 +145,6 @@ def get_player_input(name=None, uid=None):
 
 def query_answer(questions: List, key="ans", uid=None):
     return get_player_input(uid=uid)
-
 
 @dataclass
 class CheckpointArgs:

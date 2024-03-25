@@ -30,3 +30,9 @@ class RelationLevel(enum.IntEnum):
     COMMON = 2
     FAMILIAR = 3
     INTIMATE = 4
+
+if __name__ == "__main__":
+    first_level = InfectionLevel.TINY
+    print(first_level)
+    first_level = InfectionLevel(first_level + 1)
+    print(first_level)

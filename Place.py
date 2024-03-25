@@ -14,6 +14,7 @@ import random
 import json
 from utils import send_chat_msg, get_player_input, send_player_msg
 from utils import SYS_MSG_PREFIX
+from utils import InfectionLevel_TEXT
 
 
 class Place(AgentBase):
@@ -143,7 +144,7 @@ class Place(AgentBase):
         return res
         
     def welcome(self) -> Msg:
-        start_hint = "请生成一段欢迎词，100字以内。"
+        start_hint = "请根据生成一段欢迎词，要稍微体现出场所的感染程度" + InfectionLevel_TEXT[self.infection] + "，100字以内。"
 
         prompt = self.engine.join(
             self.sys_prompt + start_hint,
@@ -210,19 +211,9 @@ class Place(AgentBase):
             self.send_chat_no_reply(hint= f"强调你并没有被感染，不需要病毒消杀，50字以内。")
         return res
 
-    def infect(self, person: Person):
-        # 判定来到场所的人是否会感染病毒
-        infection_chance = {
-            InfectionLevel.CLEAN: 0,
-            InfectionLevel.TINY: 0.2,
-            InfectionLevel.COMMON: 0.4,
-            InfectionLevel.SERIOUS: 0.6,
-            InfectionLevel.CRITICAL: 0.8,
-            InfectionLevel.DEAD: 1
-        }
-        chance = infection_chance[self.infection]
-        if random.random() < chance:
-            print(f"{person.name} has been infected at {self.background}")
+    def virus_growing(self):
+        if self.infection != InfectionLevel.CLEAN and self.infection != InfectionLevel.DEAD:
+            self.infection = InfectionLevel(self.infection + 1)
 
     def gen_resource(self, medicine_dict: dict):
         resource = Resource()
