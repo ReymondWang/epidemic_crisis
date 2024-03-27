@@ -117,6 +117,8 @@ class SystemAgent(AgentBase):
         for place in self.place_list:
             place.virus_growing()
 
+        send_chat_msg("**speak**", role="小精灵", uid=self.uid, avatar="./assets/system.png")
+
         if self.user.isDead:
             dead_hint = "主角已经死亡，请生成一段游戏失败的文字，300字以内"
             prompt = self.engine.join(

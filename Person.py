@@ -54,6 +54,8 @@ class Person(AgentBase):
             self.isDead = False
      
     def self_introduction(self):
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        
         start_hint = "请生成一段自我介绍，100字以内。"
 
         prompt = self.engine.join(
@@ -79,6 +81,8 @@ class Person(AgentBase):
         send_chat_msg(msg, role=self.name, uid=self.uid, avatar=self.avatar)
 
     def welcome(self) -> Msg:
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        
         if self.relations[0].level == 1:
             hint = self.sys_prompt + f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话，并且开启一个话题。'
         else:
@@ -98,6 +102,8 @@ class Person(AgentBase):
         content = x.get("content")
         time.sleep(0.5)
         if self.name != '玩家':
+            send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+            
             prompt = self.engine.join(
                 content,
                 self.memory.get_memory()
@@ -116,32 +122,26 @@ class Person(AgentBase):
         item_name = item_arr[0]
         item_count = int(item_arr[1])
         
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+
         hint = f"""现在要判断一个物品的属于哪个类别。
         例子1
-        食物
-        food
+        食物 食物
         例子2
-        面包
-        food
+        面包 食物
         例子3
-        N95
-        mask
+        N95 口罩
         例子4
-        口罩
-        mask
+        口罩 口罩
         例子5
-        青霉素
-        盘尼西林
+        青霉素 盘尼西林
         例子6
-        奥司他韦
-        奥斯他韦
+        奥司他韦 奥司他韦
         例子7
-        RNA
-        RNA疫苗
-        例子7
-        强力消毒液
-        强力消毒液
-        请在food, mask, 盘尼西林, 奥斯他韦, RNA疫苗, 强力消毒液这六个类别内返回，并且只返回类别名称。如果不能判断出是哪个类别，则返回未知物品。
+        RNA RNA疫苗
+        例子8
+        强力消毒液 强力消毒液
+        请在food, mask, 盘尼西林, 奥司他韦, RNA疫苗, 强力消毒液这六个类别内返回，并且只返回类别名称。
         """
         prompt = self.engine.join(
             hint + "\n" + item_name
@@ -149,15 +149,27 @@ class Person(AgentBase):
         response = self.model(prompt, max=3)
         res_str = response.text
         print("------判断物资类型------" + res_str)
+        if res_str == "食物":
+            res_str = "food"
+        elif res_str == "口罩":
+            res_str = "mask"
+
         if res_str == "food":
             self.resource.inc_food(item_count)
             res_str = "***success***"
         elif res_str == "mask":
             self.resource.inc_mask(item_count)
             res_str = "***success***"
-        elif res_str in ["盘尼西林", "奥斯他韦", "RNA疫苗", "强力消毒液"]:
+        elif res_str in ["盘尼西林", "奥司他韦", "RNA疫苗", "强力消毒液"]:
             self.resource.inc_medicine(res_str, item_count)
             res_str = "***success***"
+        else:
+            err_hint = f"因为没有判断清楚对方给的到底是食物、口罩还是要皮，说一句要重新购买的话，并且告诉对方给出的是{res_str}。"
+            prompt = self.engine.join(
+                err_hint
+            )
+            response = self.model(prompt, max=3)
+            res_str = response.text
         
         msg = Msg(
             name=self.name,

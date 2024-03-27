@@ -206,6 +206,13 @@ if __name__ == "__main__":
 
 
     with gr.Blocks(css="assets/app.css") as env:
+        warning_html_code = """
+        <div class="hint" style="background-color: rgba(255, 255, 0, 0.15); padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ffcc00;">
+            <p>网络有可能不稳定造成界面错误，请刷新浏览器并点击 <strong>🔥 续写情缘</strong> 继续游戏。</p>
+            <p>开始新的游戏请点击 <strong>🚀 新的冒险</strong>并刷新浏览器。</p>
+        </div>
+        """
+        gr.HTML(warning_html_code)
         uuid = gr.Textbox(label='modelscope_uuid', visible=False)
         tabs = gr.Tabs(visible=True)
         with tabs:
@@ -286,11 +293,15 @@ if __name__ == "__main__":
         resume_button.click(game_ui, outputs=[tabs, game_tabs])
         return_welcome_button.click(welcome_ui, outputs=[tabs, game_tabs])
 
-        # new_button.click(send_reset_message, inputs=[uuid]).then(check_for_new_session, inputs=[uuid])
-        new_button.click(check_for_new_session, inputs=[uuid])
+        new_button.click(send_reset_message, inputs=[uuid]).then(check_for_new_session, inputs=[uuid])
         resume_button.click(check_for_new_session, inputs=[uuid])
 
         send_button.click(
+            send_message,
+            [user_chat_input, uuid],
+            user_chat_input,
+        )
+        user_chat_input.submit(
             send_message,
             [user_chat_input, uuid],
             user_chat_input,

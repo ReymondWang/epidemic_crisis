@@ -19,7 +19,7 @@ from Relation import Relation
 #----定义药品相关的信息 start----
 medicine_status = {
     "盘尼西林": "Y",
-    "奥斯他韦": "Y",
+    "奥司他韦": "Y",
     "RNA疫苗": "Y",
     "强力消毒液": "Y"
 }
@@ -32,7 +32,7 @@ penicillin = Medicine(
 )
 
 osweita = Medicine(
-    name="奥斯他韦",
+    name="奥司他韦",
     effect=EffectLevel.COMMON,
     price=4,
     researchCnt=4
@@ -54,7 +54,7 @@ disinfection = Medicine(
 
 medicine_dic = {
     "盘尼西林": penicillin,
-    "奥斯他韦": osweita,
+    "奥司他韦": osweita,
     "RNA疫苗": rna,
     "强力消毒液": disinfection,
 }
@@ -265,7 +265,7 @@ def main_loop(args) -> None:
     round_menu_dict = {
         "menu": ["查看状态", "研发药品", "采购物资", "与村民交谈", "开始新回合"],
         "inspection": ["自己", "小美", "花姐", "凯哥"],
-        "research": ["盘尼西林", "奥斯他韦", "RNA疫苗", "强力消毒液"],
+        "research": ["盘尼西林", "奥司他韦", "RNA疫苗", "强力消毒液"],
         "place": ["百货商场", "大药房", "医院"],
         "talking": ["小美", "花姐", "凯哥"]
     }

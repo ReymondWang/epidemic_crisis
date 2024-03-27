@@ -88,6 +88,8 @@ class Place(AgentBase):
         return msg
 
     def send_chat(self, hint):
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        
         prompt = self.engine.join(
             self.sys_prompt + hint,
             self.memory.get_memory()
@@ -98,6 +100,8 @@ class Place(AgentBase):
         return user_input
     
     def send_chat_no_reply(self, hint):
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+
         prompt = self.engine.join(
             self.sys_prompt + hint,
             self.memory.get_memory()
@@ -106,14 +110,22 @@ class Place(AgentBase):
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
     
     def get_number(self, content) -> dict:
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        
         hint = f"""现在需要从一句话中获取用户想要购买东西的数量。
         例子1
         我要购买10个食物
         食物:10
         例子2
+        我要购买10个苹果
+        苹果:10
+        例子3
         我要购买5个口罩
         口罩:5
-        例子3
+        例子4
+        我要购买2个N95口罩
+        口罩:2
+        例子4
         我要购买5盒盘尼西林
         盘尼西林:5
         请用以下格式返回
@@ -144,6 +156,8 @@ class Place(AgentBase):
         return res
         
     def welcome(self) -> Msg:
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        
         start_hint = "请根据生成一段欢迎词，要稍微体现出场所的感染程度" + InfectionLevel_TEXT[self.infection] + "，100字以内。"
 
         prompt = self.engine.join(
