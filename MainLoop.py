@@ -273,7 +273,7 @@ def main_loop(args) -> None:
     #----系统Agent start----
     systemAgent = SystemAgent(
         name="小精灵", 
-        model_config_name="qwen_72b", 
+        model_config_name="qwen-max", 
         sys_prompt="你是一个游戏的系统控制角色，负责推进游戏的进行，并且生成一些相关背景。",
         round_menu_dict=round_menu_dict,
         uid=args.uid
@@ -289,7 +289,7 @@ def main_loop(args) -> None:
     
     mall = Place(
         name="百货商场",
-        model_config_name="qwen_72b",
+        model_config_name="qwen-max",
         sys_prompt="你是一个百货商场的经营人员，商场主要售卖各种食物，总是热情的欢迎所有客人。",
         menu_list=place_menu_dict["mall"],
         resource=Resource(food=sys.maxsize),
@@ -300,7 +300,7 @@ def main_loop(args) -> None:
     
     pharmacy = Place(
         name="大药房",
-        model_config_name="qwen_72b",
+        model_config_name="qwen-max",
         sys_prompt="你是一个药店的经营人员，药店主要售卖各种口罩，总是热情的欢迎所有来买药的人。",
         menu_list=place_menu_dict["pharmacy"],
         resource=Resource(mask=sys.maxsize),
@@ -311,7 +311,7 @@ def main_loop(args) -> None:
     
     hospital = Place(
         name="医院",
-        model_config_name="qwen_72b",
+        model_config_name="qwen-max",
         sys_prompt="你是一个医院的导诊台护士，医院里可以买到各类药品，总是非常耐心的解答所有病人的问题。",
         menu_list=place_menu_dict["hospital"],
         resource=Resource(),
@@ -333,7 +333,7 @@ def main_loop(args) -> None:
     #----人员Agent start----
     beauty = MallStaff(
         name="小美",
-        model_config_name="qwen_72b",
+        model_config_name="qwen-max",
         sys_prompt="你是一个心地善良的女生，性格活泼开朗，曾经在百货商场上过一段时间班。",
         resource=Resource(),
         virus=people_virus,
@@ -343,7 +343,7 @@ def main_loop(args) -> None:
     
     flower = DrugstoreStaff(
         name="花姐",
-        model_config_name="qwen_72b",
+        model_config_name="qwen-max",
         sys_prompt="你是一个中年女性，随让脾气有些刻板，但是生活很幸福，曾经在大药房上过一段时间班。",
         resource=Resource(),
         virus=people_virus,
@@ -353,7 +353,7 @@ def main_loop(args) -> None:
     
     king = Doctor(
         name="凯哥",
-        model_config_name="qwen_72b",
+        model_config_name="qwen-max",
         sys_prompt="你是一个中年男性，是一个竟然非常丰富的内科医生，曾经有一个女儿，但是很不幸两年前离婚了，女儿跟着妈妈走了。",
         resource=Resource(),
         virus=people_virus,
@@ -371,7 +371,7 @@ def main_loop(args) -> None:
     person_list = [beauty, flower, king]
     user = User(
         name="玩家",
-        model_config_name="qwen_72b",
+        model_config_name="qwen-max",
         sys_prompt="你是游戏玩家在该游戏里的化身，是一名科学家，能够研发出新的药品对付病毒。",
         resource=Resource(),
         virus=people_virus,

@@ -2,3 +2,4 @@ __pycache__
 runs
 config
 flagged
+.DS_Store

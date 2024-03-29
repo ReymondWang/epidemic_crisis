@@ -160,8 +160,8 @@ if __name__ == "__main__":
             register_configs = []
             tongyi_config = {
                 "model_type": "dashscope_chat",
-                "config_name": "qwen_72b",
-                "model_name": "qwen-72b-chat",
+                "config_name": "qwen-max",
+                "model_name": "qwen-max",
                 "api_key": "sk-cad0e865892b46cabd421c6758687983",
                 "generate_args": {
                     "temperature": 0.5
@@ -260,10 +260,72 @@ if __name__ == "__main__":
                     with gr.Row():
                         send_button = gr.Button(value="📣发送")
             with status_tab:
-                with gr.Row():
-                    with gr.Column():
-                        user = gr.Blocks()
-
+                role_tabs = gr.Tabs()
+                with role_tabs:
+                    user_tab = gr.Tab("玩家", id=0)
+                    beauty_tab = gr.Tab("小美", id=1)
+                    with user_tab:
+                        with gr.Row():
+                            with gr.Column(scale=1):
+                                gr.Image("./assets/user.jpg", show_label=True, label="玩家")
+                            with gr.Column(scale=2.5):
+                                with gr.Row():
+                                    with gr.Column():
+                                        gr.DataFrame(
+                                            label="身体状态", 
+                                            headers=["类型", "状态"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=3,
+                                            value=[
+                                                ["感染程度", "无"],
+                                                ["健康程度", "非常好"],
+                                                ["精神状况", "非常好"],
+                                                ["佩戴口罩", "无"],
+                                            ]
+                                        )
+                                    with gr.Column():
+                                        gr.DataFrame(
+                                            label="携带药品", 
+                                            headers=["名称", "数量"],
+                                            datatype=["str", "number"], 
+                                            col_count=2, 
+                                            row_count=4,
+                                            value=[
+                                                ["盘尼西林", 6],
+                                                ["奥司他韦", 0],
+                                                ["RNA疫苗", 0],
+                                                ["强力消毒液", 0],
+                                            ]
+                                        )
+                                with gr.Row():
+                                    with gr.Column():
+                                        gr.DataFrame(
+                                            label="普通资源", 
+                                            headers=["类型", "数量"],
+                                            datatype=["str", "number"], 
+                                            col_count=2, 
+                                            row_count=3,
+                                            value=[
+                                                ["食物数量", 6],
+                                                ["口罩数量", 0],
+                                            ]
+                                        )
+                                    with gr.Column():
+                                        gr.DataFrame(
+                                            label="角色关系", 
+                                            headers=["姓名", "熟悉程度"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=3,
+                                            value=[
+                                                ["小美", "陌生"],
+                                                ["花姐", "陌生"],
+                                                ["凯哥", "陌生"],
+                                            ]
+                                        )
+                        
+                            
             with gr.Row():
                 return_welcome_button = gr.Button(value="↩️返回首页")
 
