@@ -18,6 +18,7 @@ import modelscope_studio as mgr
 from collections import defaultdict
 from multiprocessing import Event
 from typing import List
+from PIL import Image
 from utils import (
     SYS_MSG_PREFIX, 
     DEFAULT_AGENT_IMG_DIR, 
@@ -276,7 +277,9 @@ if __name__ == "__main__":
                     with user_tab:
                         with gr.Row():
                             with gr.Column(scale=2):
-                                gr.Image("./assets/user.jpg", show_label=True, label="玩家")
+                                user_image = covert_image_to_base64("./assets/user.jpg")
+                                user_image_html = f"<img src={user_image} />"
+                                gr.HTML(user_image_html)
                             with gr.Column(scale=5):
                                 with gr.Row():
                                     with gr.Column():
@@ -316,7 +319,9 @@ if __name__ == "__main__":
                     with beauty_tab:
                         with gr.Row():
                             with gr.Column(scale=2):
-                                gr.Image("./assets/npc1.jpg", show_label=True, label="小美")
+                                beauty_image = covert_image_to_base64("./assets/npc1.jpg")
+                                beauty_image_html = f"<img src={beauty_image} />"
+                                gr.HTML(beauty_image_html)
                             with gr.Column(scale=5):
                                 with gr.Row():
                                     with gr.Column():
@@ -356,7 +361,9 @@ if __name__ == "__main__":
                     with flower_tab:
                         with gr.Row():
                             with gr.Column(scale=2):
-                                gr.Image("./assets/npc2.jpg", show_label=True, label="花姐")
+                                flower_image = covert_image_to_base64("./assets/npc2.jpg")
+                                flower_image_html = f"<img src={flower_image} />"
+                                gr.HTML(flower_image_html)
                             with gr.Column(scale=5):
                                 with gr.Row():
                                     with gr.Column():
@@ -396,7 +403,9 @@ if __name__ == "__main__":
                     with king_tab:
                         with gr.Row():
                             with gr.Column(scale=2):
-                                gr.Image("./assets/npc3.jpg", show_label=True, label="凯哥")
+                                king_image = covert_image_to_base64("./assets/npc3.jpg")
+                                king_image_html = f"<img src={king_image} />"
+                                gr.HTML(king_image_html)
                             with gr.Column(scale=5):
                                 with gr.Row():
                                     with gr.Column():
