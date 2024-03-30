@@ -9,6 +9,11 @@ from typing import List
 SYS_MSG_PREFIX = '【系统】'
 DEFAULT_AGENT_IMG_DIR = "./assets/"
 
+COMMON_STATUS = "common_status"
+COMMON_RESOURCE = "common_resource"
+MEDICINE = "medicine"
+RELATION = "relation"
+
 InfectionLevel_TEXT = {
     0: "无",
     1: "轻微",
@@ -42,7 +47,11 @@ def init_uid_queues():
         "glb_queue_chat_input": Queue(),
     }
 
+def init_role_status_dict():
+    return {}
+
 glb_uid_dict = defaultdict(init_uid_queues)
+user_role_status_dict = defaultdict(init_role_status_dict)
 
 def cycle_dots(text: str, num_dots: int = 3) -> str:
     # 计算当前句尾的点的个数
@@ -104,7 +113,7 @@ def send_chat_msg(
             },
         ],
     )
-    
+
 def send_player_msg(
     msg,
     role="我",
@@ -146,6 +155,34 @@ def get_player_input(name=None, uid=None):
 def query_answer(questions: List, key="ans", uid=None):
     return get_player_input(uid=uid)
 
+def send_role_status(role: str, type: str, data: list[list], uid: str=None):
+    uid = check_uuid(uid)
+    print(f"send_role_status: role->{role}, type->{type}, data->{data}, uid->{uid}")
+    global user_role_status_dict
+    if uid not in user_role_status_dict:
+        user_role_status_dict[uid] = {}
+    if role not in user_role_status_dict[uid]:
+        user_role_status_dict[uid][role] = {}
+    user_role_status_dict[uid][role][type] = data
+
+def get_role_status(role: str, type: str, uid: str=None) -> List[List]:
+    uid = check_uuid(uid)
+    print(f"get_role_status: role->{role}, type->{type}, uid->{uid}")
+    
+    global user_role_status_dict
+    if uid not in user_role_status_dict:
+        user_role_status_dict[uid] = {}
+    if role not in user_role_status_dict[uid]:
+        user_role_status_dict[uid][role] = {}
+    
+    if type not in user_role_status_dict[uid][role]:
+        print(f"get_role_status: None")
+        return [[]]
+    else:
+        ret = user_role_status_dict[uid][role][type]
+        print(f"get_role_status: {ret}")
+        return ret
+
 @dataclass
 class CheckpointArgs:
     load_checkpoint: str = None
@@ -153,3 +190,9 @@ class CheckpointArgs:
 
 class ResetException(Exception):
     pass
+
+if __name__ == "__main__":
+    glb_uid_dict = defaultdict(init_uid_queues)
+    data = [["感染程度", "无"],["健康程度", "非常好"],["精神状况", "非常好"],["佩戴口罩", "无"],]
+    send_role_status("user", "common", data, uid="local")
+    print(get_role_status("user", type="common", uid="local"))

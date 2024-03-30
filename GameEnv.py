@@ -18,22 +18,26 @@ import modelscope_studio as mgr
 from collections import defaultdict
 from multiprocessing import Event
 from typing import List
-from utils import SYS_MSG_PREFIX, DEFAULT_AGENT_IMG_DIR
-from utils import check_uuid, get_chat_msg, cycle_dots, send_chat_msg, send_player_input, send_player_msg
+from utils import (
+    SYS_MSG_PREFIX, 
+    DEFAULT_AGENT_IMG_DIR, 
+    COMMON_STATUS, 
+    COMMON_RESOURCE, 
+    MEDICINE, 
+    RELATION
+)
+from utils import check_uuid, get_chat_msg, cycle_dots, send_chat_msg, send_player_input, send_player_msg, get_role_status
 from utils import ResetException, CheckpointArgs
 from MainLoop import main_loop
 
 MAX_NUM_DISPLAY_MSG = 20
 FAIL_COUNT_DOWN = 30
 
-
 def init_uid_list():
     return []
 
-
 def init_uid_dict():
     return {}
-
 
 glb_signed_user = []
 is_init = Event()
@@ -41,7 +45,6 @@ is_init = Event()
 glb_history_dict = defaultdict(init_uid_list)
 glb_doing_signal_dict = defaultdict(init_uid_dict)
 glb_end_choosing_index_dict = defaultdict(lambda: -1)
-
 
 # 图片本地路径转换为 base64 格式
 def covert_image_to_base64(image_path):
@@ -60,7 +63,6 @@ def covert_image_to_base64(image_path):
         # 生成base64编码的地址
         base64_url = f"data:image/{ext};base64,{base64_data}"
         return base64_url
-
 
 def format_cover_html(name="", bot_avatar_path="assets/bg.png"):
     config = {
@@ -87,7 +89,6 @@ def format_cover_html(name="", bot_avatar_path="assets/bg.png"):
     {config.get("introduction_context", "玩法介绍")}</div>
 </div>
 """
-
 
 def get_chat(uid) -> List[List]:
     uid = check_uuid(uid)
@@ -141,18 +142,15 @@ def get_chat(uid) -> List[List]:
 
     return dial_msg[-MAX_NUM_DISPLAY_MSG:], sys_msg[-MAX_NUM_DISPLAY_MSG:]
 
-
 def reset_glb_var(uid):
     global glb_history_dict, glb_doing_signal_dict, glb_end_choosing_index_dict
     glb_history_dict[uid] = init_uid_list()
     glb_doing_signal_dict[uid] = init_uid_dict()
     glb_end_choosing_index_dict[uid] = -1
 
-
 def fn_choice(data: gr.EventData, uid):
     uid = check_uuid(uid)
     send_player_input(data._data["value"], uid=uid)
-
 
 if __name__ == "__main__":
     def init_game():
@@ -204,7 +202,6 @@ if __name__ == "__main__":
                     time.sleep(1)
             reset_glb_var(uid)
 
-
     with gr.Blocks(css="assets/app.css") as env:
         warning_html_code = """
         <div class="hint" style="background-color: rgba(255, 255, 0, 0.15); padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ffcc00;">
@@ -214,6 +211,16 @@ if __name__ == "__main__":
         """
         gr.HTML(warning_html_code)
         uuid = gr.Textbox(label='modelscope_uuid', visible=False)
+
+        user_id = gr.Textbox(label='user_id', visible=False, value="玩家")
+        beauty_id = gr.Textbox(label='beauty_id', visible=False, value="小美")
+        flower_id = gr.Textbox(label='flower_id', visible=False, value="花姐")
+        king_id = gr.Textbox(label='king_id', visible=False, value="凯哥")
+        common_status_id = gr.Textbox(label='common_status_id', visible=False, value=COMMON_STATUS)
+        medicine_id = gr.Textbox(label='medicine_id', visible=False, value=MEDICINE)
+        common_resource_id = gr.Textbox(label='common_resource_id', visible=False, value=COMMON_RESOURCE)
+        relation_id = gr.Textbox(label='relation_id', visible=False, value=RELATION)
+
         tabs = gr.Tabs(visible=True)
         with tabs:
             welcome_tab = gr.Tab('游戏界面', id=0)
@@ -264,71 +271,171 @@ if __name__ == "__main__":
                 with role_tabs:
                     user_tab = gr.Tab("玩家", id=0)
                     beauty_tab = gr.Tab("小美", id=1)
+                    flower_tab = gr.Tab("花姐", id=2)
+                    king_tab = gr.Tab("凯哥", id=3)
                     with user_tab:
                         with gr.Row():
-                            with gr.Column(scale=1):
+                            with gr.Column(scale=2):
                                 gr.Image("./assets/user.jpg", show_label=True, label="玩家")
-                            with gr.Column(scale=2.5):
+                            with gr.Column(scale=5):
                                 with gr.Row():
                                     with gr.Column():
-                                        gr.DataFrame(
+                                        user_status_df = gr.DataFrame(
                                             label="身体状态", 
                                             headers=["类型", "状态"],
                                             datatype=["str", "str"], 
                                             col_count=2, 
-                                            row_count=3,
-                                            value=[
-                                                ["感染程度", "无"],
-                                                ["健康程度", "非常好"],
-                                                ["精神状况", "非常好"],
-                                                ["佩戴口罩", "无"],
-                                            ]
+                                            row_count=4,
                                         )
                                     with gr.Column():
-                                        gr.DataFrame(
+                                        user_medicine_df = gr.DataFrame(
                                             label="携带药品", 
                                             headers=["名称", "数量"],
-                                            datatype=["str", "number"], 
+                                            datatype=["str", "str"], 
                                             col_count=2, 
                                             row_count=4,
-                                            value=[
-                                                ["盘尼西林", 6],
-                                                ["奥司他韦", 0],
-                                                ["RNA疫苗", 0],
-                                                ["强力消毒液", 0],
-                                            ]
+                                            height=185
                                         )
                                 with gr.Row():
                                     with gr.Column():
-                                        gr.DataFrame(
+                                        user_resource_df = gr.DataFrame(
                                             label="普通资源", 
                                             headers=["类型", "数量"],
-                                            datatype=["str", "number"], 
+                                            datatype=["str", "str"], 
                                             col_count=2, 
-                                            row_count=3,
-                                            value=[
-                                                ["食物数量", 6],
-                                                ["口罩数量", 0],
-                                            ]
+                                            row_count=2,
                                         )
                                     with gr.Column():
-                                        gr.DataFrame(
+                                        user_relation_df = gr.DataFrame(
                                             label="角色关系", 
                                             headers=["姓名", "熟悉程度"],
                                             datatype=["str", "str"], 
                                             col_count=2, 
                                             row_count=3,
-                                            value=[
-                                                ["小美", "陌生"],
-                                                ["花姐", "陌生"],
-                                                ["凯哥", "陌生"],
-                                            ]
                                         )
-                        
-                            
+                    with beauty_tab:
+                        with gr.Row():
+                            with gr.Column(scale=2):
+                                gr.Image("./assets/npc1.jpg", show_label=True, label="小美")
+                            with gr.Column(scale=5):
+                                with gr.Row():
+                                    with gr.Column():
+                                        beauty_status_df = gr.DataFrame(
+                                            label="身体状态", 
+                                            headers=["类型", "状态"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=4,
+                                        )
+                                    with gr.Column():
+                                        beauty_medicine_df = gr.DataFrame(
+                                            label="携带药品", 
+                                            headers=["名称", "数量"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=4,
+                                            height=185
+                                        )
+                                with gr.Row():
+                                    with gr.Column():
+                                        beauty_resource_df = gr.DataFrame(
+                                            label="普通资源", 
+                                            headers=["类型", "数量"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=2,
+                                        )
+                                    with gr.Column():
+                                        beauty_relation_df = gr.DataFrame(
+                                            label="角色关系", 
+                                            headers=["姓名", "熟悉程度"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=3,
+                                        ) 
+                    with flower_tab:
+                        with gr.Row():
+                            with gr.Column(scale=2):
+                                gr.Image("./assets/npc2.jpg", show_label=True, label="花姐")
+                            with gr.Column(scale=5):
+                                with gr.Row():
+                                    with gr.Column():
+                                        flower_status_df = gr.DataFrame(
+                                            label="身体状态", 
+                                            headers=["类型", "状态"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=4,
+                                        )
+                                    with gr.Column():
+                                        flower_medicine_df = gr.DataFrame(
+                                            label="携带药品", 
+                                            headers=["名称", "数量"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=4,
+                                            height=185
+                                        )
+                                with gr.Row():
+                                    with gr.Column():
+                                        flower_resource_df = gr.DataFrame(
+                                            label="普通资源", 
+                                            headers=["类型", "数量"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=2,
+                                        )
+                                    with gr.Column():
+                                        flower_relation_df = gr.DataFrame(
+                                            label="角色关系", 
+                                            headers=["姓名", "熟悉程度"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=3,
+                                        )
+                    with king_tab:
+                        with gr.Row():
+                            with gr.Column(scale=2):
+                                gr.Image("./assets/npc3.jpg", show_label=True, label="凯哥")
+                            with gr.Column(scale=5):
+                                with gr.Row():
+                                    with gr.Column():
+                                        king_status_df = gr.DataFrame(
+                                            label="身体状态", 
+                                            headers=["类型", "状态"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=4,
+                                        )
+                                    with gr.Column():
+                                        king_medicine_df = gr.DataFrame(
+                                            label="携带药品", 
+                                            headers=["名称", "数量"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=4,
+                                            height=185
+                                        )
+                                with gr.Row():
+                                    with gr.Column():
+                                        king_resource_df = gr.DataFrame(
+                                            label="普通资源", 
+                                            headers=["类型", "数量"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=2,
+                                        )
+                                    with gr.Column():
+                                        king_relation_df = gr.DataFrame(
+                                            label="角色关系", 
+                                            headers=["姓名", "熟悉程度"],
+                                            datatype=["str", "str"], 
+                                            col_count=2, 
+                                            row_count=3,
+                                        )
+
             with gr.Row():
                 return_welcome_button = gr.Button(value="↩️返回首页")
-
 
         def send_message(msg, uid):
             uid = check_uuid(uid)
@@ -336,20 +443,16 @@ if __name__ == "__main__":
             send_player_msg(msg, "我", uid=uid)
             return ""
 
-
         def send_reset_message(uid):
             uid = check_uuid(uid)
             send_player_input("**Reset**", uid=uid)
             return ""
 
-
         def game_ui():
             return gr.update(visible=False), gr.update(visible=True)
 
-
         def welcome_ui():
             return gr.update(visible=True), gr.update(visible=False)
-
 
         new_button.click(game_ui, outputs=[tabs, game_tabs])
         resume_button.click(game_ui, outputs=[tabs, game_tabs])
@@ -377,6 +480,42 @@ if __name__ == "__main__":
                  inputs=[uuid],
                  outputs=[chatbot, chatsys],
                  every=0.5)
+        
+        status_tab.select(fn=get_role_status, inputs=[user_id, common_status_id, uuid], outputs=[user_status_df])
+        status_tab.select(fn=get_role_status, inputs=[user_id, common_resource_id, uuid], outputs=[user_resource_df])
+        status_tab.select(fn=get_role_status, inputs=[user_id, medicine_id, uuid], outputs=[user_medicine_df])
+        status_tab.select(fn=get_role_status, inputs=[user_id, relation_id, uuid], outputs=[user_relation_df])
+        user_tab.select(fn=get_role_status, inputs=[user_id, common_status_id, uuid], outputs=[user_status_df])
+        user_tab.select(fn=get_role_status, inputs=[user_id, common_resource_id, uuid], outputs=[user_resource_df])
+        user_tab.select(fn=get_role_status, inputs=[user_id, medicine_id, uuid], outputs=[user_medicine_df])
+        user_tab.select(fn=get_role_status, inputs=[user_id, relation_id, uuid], outputs=[user_relation_df])
+        
+        status_tab.select(fn=get_role_status, inputs=[beauty_id, common_status_id, uuid], outputs=[beauty_status_df])
+        status_tab.select(fn=get_role_status, inputs=[beauty_id, common_resource_id, uuid], outputs=[beauty_resource_df])
+        status_tab.select(fn=get_role_status, inputs=[beauty_id, medicine_id, uuid], outputs=[beauty_medicine_df])
+        status_tab.select(fn=get_role_status, inputs=[beauty_id, relation_id, uuid], outputs=[beauty_relation_df])
+        beauty_tab.select(fn=get_role_status, inputs=[beauty_id, common_status_id, uuid], outputs=[beauty_status_df])
+        beauty_tab.select(fn=get_role_status, inputs=[beauty_id, common_resource_id, uuid], outputs=[beauty_resource_df])
+        beauty_tab.select(fn=get_role_status, inputs=[beauty_id, medicine_id, uuid], outputs=[beauty_medicine_df])
+        beauty_tab.select(fn=get_role_status, inputs=[beauty_id, relation_id, uuid], outputs=[beauty_relation_df])
+        
+        status_tab.select(fn=get_role_status, inputs=[flower_id, common_status_id, uuid], outputs=[flower_status_df])
+        status_tab.select(fn=get_role_status, inputs=[flower_id, common_resource_id, uuid], outputs=[flower_resource_df])
+        status_tab.select(fn=get_role_status, inputs=[flower_id, medicine_id, uuid], outputs=[flower_medicine_df])
+        status_tab.select(fn=get_role_status, inputs=[flower_id, relation_id, uuid], outputs=[flower_relation_df])
+        flower_tab.select(fn=get_role_status, inputs=[flower_id, common_status_id, uuid], outputs=[flower_status_df])
+        flower_tab.select(fn=get_role_status, inputs=[flower_id, common_resource_id, uuid], outputs=[flower_resource_df])
+        flower_tab.select(fn=get_role_status, inputs=[flower_id, medicine_id, uuid], outputs=[flower_medicine_df])
+        flower_tab.select(fn=get_role_status, inputs=[flower_id, relation_id, uuid], outputs=[flower_relation_df])
+        
+        status_tab.select(fn=get_role_status, inputs=[king_id, common_status_id, uuid], outputs=[king_status_df])
+        status_tab.select(fn=get_role_status, inputs=[king_id, common_resource_id, uuid], outputs=[king_resource_df])
+        status_tab.select(fn=get_role_status, inputs=[king_id, medicine_id, uuid], outputs=[king_medicine_df])
+        status_tab.select(fn=get_role_status, inputs=[king_id, relation_id, uuid], outputs=[king_relation_df])
+        king_tab.select(fn=get_role_status, inputs=[king_id, common_status_id, uuid], outputs=[king_status_df])
+        king_tab.select(fn=get_role_status, inputs=[king_id, common_resource_id, uuid], outputs=[king_resource_df])
+        king_tab.select(fn=get_role_status, inputs=[king_id, medicine_id, uuid], outputs=[king_medicine_df])
+        king_tab.select(fn=get_role_status, inputs=[king_id, relation_id, uuid], outputs=[king_relation_df])
 
     env.queue()
     env.launch()

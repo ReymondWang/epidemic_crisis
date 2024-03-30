@@ -4,8 +4,8 @@ from enums import InfectionLevel, HealthLevel
 from Resource import Resource
 from Virus import Virus
 from agentscope.message import Msg
-from utils import send_chat_msg
-from utils import SYS_MSG_PREFIX
+from utils import send_chat_msg, send_role_status
+from utils import SYS_MSG_PREFIX, COMMON_STATUS, COMMON_RESOURCE, MEDICINE, RELATION
 from utils import HealthLevel_TEXT, InfectionLevel_TEXT, WearingMask_TEXT, RelationLevel_TEXT
 from agentscope.prompt import PromptType, PromptEngine
 import time
@@ -189,6 +189,31 @@ class Person(AgentBase):
     def virus_growing(self):
         if self.infection != InfectionLevel.CLEAN and self.infection != InfectionLevel.DEAD:
             self.infection = InfectionLevel(self.infection + 1)
+
+    def update_status(self):
+        common_status = [
+            ["感染程度", InfectionLevel_TEXT[self.infection]],
+            ["健康程度", HealthLevel_TEXT[self.physicalHealth]],
+            ["精神状况", HealthLevel_TEXT[self.mindHealth]],
+            ["佩戴口罩", WearingMask_TEXT[self.isWearingMask]],
+        ]
+        send_role_status(self.name, COMMON_STATUS, common_status, self.uid)
+
+        common_resource = [
+            ["食物数量", self.resource.get_food()],
+            ["口罩数量", self.resource.get_mask()],
+        ]
+        send_role_status(self.name, COMMON_RESOURCE, common_resource, self.uid)
+
+        medicine = []
+        for medicine_key in self.resource.medicine:
+            medicine.append([medicine_key, self.resource.medicine[medicine_key]])
+        send_role_status(self.name, MEDICINE, medicine, self.uid)
+
+        relation = []
+        for rel in self.relations :
+            relation.append([rel.person2.name, RelationLevel_TEXT[rel.level]])
+        send_role_status(self.name, RELATION, relation, self.uid)
 
 # 玩家
 class User(Person):

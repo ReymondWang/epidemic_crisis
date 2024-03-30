@@ -110,10 +110,12 @@ class SystemAgent(AgentBase):
         self.user.gen_random_resource()
         self.user.virus_growing()
         self.user.die()
+        self.user.update_status()
         for person in self.person_list:
             person.gen_random_resource()
             person.virus_growing()
             person.die()
+            person.update_status()
         for place in self.place_list:
             place.virus_growing()
 
