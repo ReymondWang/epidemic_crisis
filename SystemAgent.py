@@ -280,7 +280,7 @@ class SystemAgent(AgentBase):
     
 if __name__ == "__main__":
     round_menu_dict = {
-        "menu": ["查看状态", "研发药品", "采购物资", "与村民交谈"],
+        "menu": ["研发药品", "采购物资", "与村民交谈"],
         "inspection": ["自己", "小美", "花姐", "凯哥"],
         "research": ["盘尼西林", "奥斯维他", "RNA疫苗", "强力消毒液"],
         "place": ["百货商场", "大药房", "医院"],

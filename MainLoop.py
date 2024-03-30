@@ -164,6 +164,7 @@ def place_loop(place: Place, user: Person, uid):
             if "Y" == item_dict.get("success"):
                 item = item_dict.get("content")
                 msg = user.add_resource(item)
+                user.update_status()
                 print("----增加资源返回结果----")
                 print(msg)
     return Msg(
@@ -213,6 +214,7 @@ def talk_loop(person: Person, user: Person, uid, SystemAgent):
         for relation in user.relations:
             if relation.person2.name == person.name:
                 relation.level = RelationLevel[response.text]
+        person.update_status()
     return SystemAgent.show_main_menu()
 
 
@@ -263,7 +265,7 @@ def main_loop(args) -> None:
     send_chat_msg(game_description, uid=args.uid)
     
     round_menu_dict = {
-        "menu": ["查看状态", "研发药品", "采购物资", "与村民交谈", "开始新回合"],
+        "menu": ["研发药品", "采购物资", "与村民交谈", "开始新回合"],
         "inspection": ["自己", "小美", "花姐", "凯哥"],
         "research": ["盘尼西林", "奥司他韦", "RNA疫苗", "强力消毒液"],
         "place": ["百货商场", "大药房", "医院"],
