@@ -183,8 +183,8 @@ class Person(AgentBase):
         # 获得随机数量的资源，暂定十个以内
         pass
     
-    def set_medicine_status(self, medicine_status):
-        self.medicine_status = medicine_status
+    def set_medicine_list(self, medicine_list:list):
+        self.medicine_list = medicine_list
 
     def virus_growing(self):
         if self.infection != InfectionLevel.CLEAN and self.infection != InfectionLevel.DEAD:
@@ -230,8 +230,8 @@ class User(Person):
     ) -> None:
         super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
     
-    def set_medicine_status(self, medicine_status: dict):
-        self.medicine_status = medicine_status
+    def set_medicine_list(self, medicine_list: list):
+        self.medicine_list = medicine_list
     
     def gen_random_resource(self):
         resourceType = random.randint(1, 3)
@@ -246,9 +246,9 @@ class User(Person):
             self.resource.inc_mask(resourceSum)
         else:
             avail_medicine_name = []
-            for key in self.medicine_status:
-                if self.medicine_status[key] == "Y":
-                    avail_medicine_name.append(key)    
+            for medicine in self.medicine_list:
+                if medicine.enable == "Y":
+                    avail_medicine_name.append(medicine.name)    
             medicine_name = avail_medicine_name[random.randint(0, len(avail_medicine_name) - 1)]
         
             randint = random.randint(1, 9)
@@ -316,14 +316,14 @@ class Doctor(Person):
     ) -> None:
         super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
     
-    def set_medicine_status(self, medicine_status: dict):
-        self.medicine_status = medicine_status
+    def set_medicine_list(self, medicine_list: list):
+        self.medicine_list = medicine_list
     
     def gen_random_resource(self):
         avail_medicine_name = []
-        for key in self.medicine_status:
-            if self.medicine_status[key] == "Y":
-                avail_medicine_name.append(key)    
+        for medicine in self.medicine_list:
+            if medicine.enable == "Y":
+                avail_medicine_name.append(medicine.name)    
         medicine_name = avail_medicine_name[random.randint(0, len(avail_medicine_name) - 1)]
         
         randint = random.randint(1, 9)

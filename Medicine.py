@@ -17,13 +17,17 @@ class Medicine(object):
         name: str,
         effect: EffectLevel,
         price: int,
-        researchCnt: int
+        researchCnt: int,
+        curCnt: int,
+        enable: str
     ) -> None:
         super().__init__()
         self.name = name
         self.effect = effect
         self.price = price
         self.researchCnt = researchCnt
+        self.curCnt = curCnt
+        self.enable = enable
 
     @staticmethod
     def builtin_medicines():
@@ -31,14 +35,15 @@ class Medicine(object):
         medicine_list = []
         medicine_name_list = []
 
-        for index, row in medicine_pd.iterrows():
+        for _, row in medicine_pd.iterrows():
             name = row['Name']
-            effect = row['Effect']
+            effect = EffectLevel(row['Effect'])
             price = row['Price']
             research_cnt = row['Research_Count']
-            medicine_to_add = Medicine(name, effect, price, researchCnt=research_cnt)
+            enable = row['Enable']
+            medicine_to_add = Medicine(name, effect, price, researchCnt=research_cnt, curCnt=0, enable=enable)
             medicine_list.append(medicine_to_add)
-            medicine_name_list = medicine_name_list.append(name)
+            medicine_name_list.append(name)
 
         return medicine_list, medicine_name_list
 
@@ -48,12 +53,23 @@ class Medicine(object):
             if name == med.name:
                 return med
         raise Exception("Medicine is not supported yet.")
+    
+    def inc_cur_cnt(self):
+        if self.enable == "N":
+            if not self.curCnt:
+                self.curCnt = 0
+            self.curCnt += 1
+            if self.curCnt == self.researchCnt:
+                self.enable = "Y"
+        else:
+            print(f"Medicine:{self.name}已经研发成功，无需增加研发回合。")
 
 
 if __name__ == "__main__":
-    medicine = Medicine(name="盘尼西林", effect=EffectLevel.POOR, price=5, researchCnt=5)
+    medicine = Medicine(name="盘尼西林", effect=EffectLevel.POOR, price=5, researchCnt=5, enable="Y")
     print(medicine.name)
     print(medicine.effect.value)
     print(medicine.price)
     print(medicine.researchCnt)
-    print(medicine.get_medicine_detail("盘尼西林A").name)
+    Medicine.builtin_medicines()
+    print(medicine.get_medicine_detail(name="奥司他韦").enable)

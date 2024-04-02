@@ -14,8 +14,6 @@ class Research(AgentBase):
 
     def __init__(
             self,
-            medicine: Medicine,
-            cur_cnt: int,
             name: str,
             sys_prompt: str = None,
             model_config_name: str = None,
@@ -24,29 +22,55 @@ class Research(AgentBase):
     ) -> None:
         super().__init__(name, sys_prompt, model_config_name)
         self.engine = PromptEngine(self.model, prompt_type=PromptType.LIST)
-        self.medicine = medicine
-        self.cur_cnt = cur_cnt
         self.avatar = avatar
         self.uid = uid
 
+    def set_medicine(self, medicine: Medicine):
+        self.medicine = medicine
+
+    def ask_question(self) -> dict:
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        
+        hint=f"帮我对这个药物生成知识问答型问题。药物名称是：{self.medicine.name}。请只生成一个问题。你生成的问题是："
+        prompt = self.engine.join(
+            self.sys_prompt + hint,
+            self.memory.get_memory()
+        )
+        response = self.model(prompt, max=3)
+        self.question = response.text
+
+        # 将已经问过的问题添加到memory中
+        self.memory.add(response.text)
+
+        send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+        user_input = get_player_input(uid=self.uid)
+
+        msg = Msg(
+            self.name,
+            role="user",
+            content=user_input
+        )
+        return msg
+
     def reply(self, x: dict = None) -> dict:
-        if x is not None:
-            self.memory.add(x)
-
         content = x.get("content")
-        time.sleep(0.5)
+        if content == "结束":
+            content="***end***"
+        else:
+            send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
 
-        _, name_list = Medicine.builtin_medicines()
-        while True:
-            if content == "研发药物":
-                content = self.send_chat(
-                    hint=f"你有很多药物，我要研发这些药物。请说一句欢迎的话，并让我从一些药物中选择我要研发的药物。50字以内。可供研发的药物：{name_list}")
-            elif content in name_list:
-                content = self.send_chat(
-                    hint=f"帮我对这个药物生成知识问答型问题。药物名称是：{content}。你生成的问题是：")
-            elif content == "结束":
-                content = "***end***"
-            break
+            is_correct = self.generate_jud_resp_prompt(content)
+            if is_correct == "是":
+                self.medicine.inc_cur_cnt()
+                if self.medicine.effect == "Y":
+                    self.finish_researching()
+                    content="***end***"
+                else:
+                    self.send_respose_msg(True)
+                    return self.ask_question()
+            else:
+                self.send_respose_msg(False)
+                content = get_player_input(uid=self.uid)
 
         msg = Msg(
             self.name,
@@ -55,34 +79,37 @@ class Research(AgentBase):
         )
         return msg
 
-    def send_chat(self, hint):
+    # 为某一个 Medicine 生成问题，此处只返回判断答案的 Prompt. 由环境 Agent 调用, -- 可能要修改
+    def generate_jud_resp_prompt(self, answer):
+        print(f"----判断问题【{self.question}】的答案【{answer}】是否正确----")
+        
+        hint = f"已知当前的问题是{self.question}，请判断答案{answer}是否正确，你只能返回是或否。"
+        prompt = self.engine.join(
+            self.sys_prompt + hint,
+            self.memory.get_memory()
+        )
+        response = self.model(prompt, max=3)
+        print(f"----答案判断为{response.text}----")
+        return response.text
+    
+    def send_respose_msg(self, result):
+        if result:
+            hint = f"玩家的问题回答正确，说一段奖励的话，并进入下一回合研发，50字以内。"
+        else:
+            hint = f"玩家的问题回答错误，说一段安慰的话，并鼓励继续努力，50字以内。"
+        
         prompt = self.engine.join(
             self.sys_prompt + hint,
             self.memory.get_memory()
         )
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
-        user_input = get_player_input(uid=self.uid)
-        return user_input
-
-    # 为某一个 Medicine 生成问题，此处只返回判断答案的 Prompt. 由环境 Agent 调用, -- 可能要修改
-    def generate_jud_resp_prompt(self, question, resp):
-        medicine = self.medicine
-        prompt = f"我会给你一个问题和一个答案，他们应该都是和一个药品相关的。帮我判断这个答案是否回答了这个问题。药品是：{medicine.name}，问题是：{question}, 答案是：{resp}。请回答："
-        return prompt
-
-    # 只有当回答了本轮的问题，才会增加一个回合数。固定是一个回合
-    def inc_cur_cnt_one(self):
-        self.cur_cnt += 1
 
     def finish_researching(self):
-        medicine = self.medicine
-        cur_cnt = self.cur_cnt
-
-        if cur_cnt < medicine.researchCnt:
-            return False
-        else:
-            if cur_cnt == medicine.researchCnt:
-                return True
-            else:
-                raise Exception("Service Internal Error. Error Code: 1001")
+        hint = f"药品{self.medicine.name}已经已经研发成功，请说一段奖励的话，50字以内。"
+        prompt = self.engine.join(
+            self.sys_prompt + hint,
+            self.memory.get_memory()
+        )
+        response = self.model(prompt, max=3)
+        send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)

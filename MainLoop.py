@@ -9,6 +9,7 @@ from Virus import Virus
 from Place import Place
 from Medicine import Medicine
 from Person import Person, MallStaff, DrugstoreStaff, Doctor, User
+from Research import Research
 from enums import InfectionLevel, EffectLevel, RelationLevel
 from utils import SYS_MSG_PREFIX
 from utils import InfectionLevel_TEXT
@@ -17,47 +18,11 @@ from agentscope.message import Msg
 from Relation import Relation
 
 #----定义药品相关的信息 start----
-medicine_status = {
-    "盘尼西林": "Y",
-    "奥司他韦": "Y",
-    "RNA疫苗": "Y",
-    "强力消毒液": "Y"
-}
+medicine_list, _ = Medicine.builtin_medicines()
 
-penicillin = Medicine(
-    name="盘尼西林",
-    effect=EffectLevel.POOR,
-    price=2,
-    researchCnt=2
-)
-
-osweita = Medicine(
-    name="奥司他韦",
-    effect=EffectLevel.COMMON,
-    price=4,
-    researchCnt=4
-)
-
-rna = Medicine(
-    name="RNA疫苗",
-    effect=EffectLevel.GOOD,
-    price=6,
-    researchCnt=6
-)
-
-disinfection = Medicine(
-    name="强力消毒液",
-    effect=EffectLevel.GOOD,
-    price=6,
-    researchCnt=6
-)
-
-medicine_dic = {
-    "盘尼西林": penicillin,
-    "奥司他韦": osweita,
-    "RNA疫苗": rna,
-    "强力消毒液": disinfection,
-}
+medicine_dic = {}
+for medicine in medicine_list:
+    medicine_dic[medicine.name] = medicine
 
 #----定义药品相关的信息 end----
 
@@ -218,17 +183,37 @@ def talk_loop(person: Person, user: Person, uid, SystemAgent):
     return SystemAgent.show_main_menu()
 
 
+def research_loop(research: Research, medicine: Medicine, uid):
+    """
+    针对药品研发的主要循环
+    """
+
+    send_chat_msg(f" {SYS_MSG_PREFIX}开始{medicine.name}的研发，输入【结束】停止。", uid=uid)
+    research.set_medicine(medicine)
+    msg = research.ask_question()
+    while True:
+        msg = research(msg)
+        if msg.get("content") == "***end***":
+            break
+
+    return Msg(
+            name=research.name,
+            role="user",
+            content="主菜单"
+        )
+
+
 def show_available_medicine(uid):
     """
     显示用户当前可以使用的药品
     """
-    medicine_list = []
-    for key in medicine_status:
-        if medicine_status[key] == "Y":
-            medicine_list.append(key)
+    medicine_name_list = []
+    for medicine in medicine_list:
+        if medicine.enable == "Y":
+            medicine_name_list.append(medicine.name)
     choose_medicine = f""" {SYS_MSG_PREFIX}请选择要使用: <select-box shape="card" 
         type="checkbox" item-width="auto" 
-        options='{json.dumps(medicine_list, ensure_ascii=False)}' 
+        options='{json.dumps(medicine_name_list, ensure_ascii=False)}' 
         select-once></select-box>"""
     send_chat_msg(
         choose_medicine,
@@ -267,7 +252,6 @@ def main_loop(args) -> None:
     round_menu_dict = {
         "menu": ["研发药品", "采购物资", "与村民交谈", "开始新回合"],
         "inspection": ["自己", "小美", "花姐", "凯哥"],
-        "research": ["盘尼西林", "奥司他韦", "RNA疫苗", "强力消毒液"],
         "place": ["百货商场", "大药房", "医院"],
         "talking": ["小美", "花姐", "凯哥"]
     }
@@ -280,6 +264,7 @@ def main_loop(args) -> None:
         round_menu_dict=round_menu_dict,
         uid=args.uid
     )
+    systemAgent.set_medicine_list(medicine_list)
     #----系统Agent end----
     
     #----场所Agent start----
@@ -322,7 +307,7 @@ def main_loop(args) -> None:
         uid=args.uid
     )
     
-    hospital.gen_resource(medicine_status)
+    hospital.gen_resource(medicine_list)
     
     place_dic = {
         "百货商场": mall,
@@ -362,7 +347,7 @@ def main_loop(args) -> None:
         avatar="./assets/npc3.jpg",
         uid=args.uid
     )
-    king.set_medicine_status(medicine_status)
+    king.set_medicine_list(medicine_list)
     
     npc_dict = {
         "小美": beauty,
@@ -380,13 +365,25 @@ def main_loop(args) -> None:
         avatar="./assets/user.jpg",
         uid=args.uid
     )
-    user.set_medicine_status(medicine_status)
+    user.set_medicine_list(medicine_list)
     
     for person in person_list :
         person.relations = [Relation(person, user, RelationLevel.STRANGE)]
         user.relations.append(Relation(user, person, RelationLevel.STRANGE))
     #----人员Agent end----
     
+    #----研发Agent start----
+    
+    research = Research(
+        name="研发助手",
+        model_config_name="qwen-max",
+        sys_prompt="你是一个辅助药品研发的助手，知道很多有用的药品知识。",
+        avatar="./assets/system.png",
+        uid=args.uid
+    )
+
+    #----研发Agent end----
+
     #------游戏开始------
     systemAgent.set_role_list(user = user, person_list = person_list, place_list = place_list)
     systemAgent.rand_infection()
@@ -406,3 +403,6 @@ def main_loop(args) -> None:
         if '交谈' in content:
             if content[3:] in npc_dict :
                 msg = talk_loop(npc_dict[content[3:]], user, uid=args.uid, SystemAgent=systemAgent)
+        if content in medicine_dic:
+            msg = research_loop(research, medicine_dic[content], uid=args.uid)
+            

@@ -33,6 +33,9 @@ class SystemAgent(AgentBase):
         self.person_list = person_list
         self.place_list = place_list
 
+    def set_medicine_list(self, medicine_list: list):
+        self.medicine_list = medicine_list
+
     def rand_infection(self):
         """
         游戏开始时随机感染个人或地方
@@ -195,13 +198,17 @@ class SystemAgent(AgentBase):
         return Msg(name="user", content=content)
       
     def show_research_menu(self) -> Msg:
-        medicine_list = self.round_menu_dict["research"]
-        if "主菜单" not in medicine_list:
-            medicine_list.append("主菜单")
+        medicine_name_list = []
+        for medicine in self.medicine_list:
+            if medicine.name not in medicine_name_list and medicine.enable == "N":
+                medicine_name_list.append(medicine.name)
+
+        if "主菜单" not in medicine_name_list:
+            medicine_name_list.append("主菜单")
         
         choose_medicine = f""" {SYS_MSG_PREFIX}请选择想要研发的药品: <select-box shape="card" 
             type="checkbox" item-width="auto" 
-            options='{json.dumps(medicine_list, ensure_ascii=False)}' 
+            options='{json.dumps(medicine_name_list, ensure_ascii=False)}' 
             select-once></select-box>"""
             
         send_chat_msg(

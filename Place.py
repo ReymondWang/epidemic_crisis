@@ -229,12 +229,12 @@ class Place(AgentBase):
         if self.infection != InfectionLevel.CLEAN and self.infection != InfectionLevel.DEAD:
             self.infection = InfectionLevel(self.infection + 1)
 
-    def gen_resource(self, medicine_dict: dict):
+    def gen_resource(self, medicine_list: list):
         resource = Resource()
         medicine = {}
-        for key, value in medicine_dict.items():
-            if value == "Y":
-                medicine[key] = sys.maxsize
+        for med in medicine_list:
+            if med.enable == "Y":
+                medicine[med.name] = sys.maxsize
         resource.medicine = medicine
         self.resource = resource
 
