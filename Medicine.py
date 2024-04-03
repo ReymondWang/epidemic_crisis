@@ -16,10 +16,11 @@ class Medicine(object):
         self,
         name: str,
         effect: EffectLevel,
-        price: int,
-        researchCnt: int,
-        curCnt: int,
-        enable: str
+        price: int=1,
+        researchCnt: int=1,
+        curCnt: int=0,
+        enable: str="N",
+        question: dict=None
     ) -> None:
         super().__init__()
         self.name = name
@@ -28,12 +29,14 @@ class Medicine(object):
         self.researchCnt = researchCnt
         self.curCnt = curCnt
         self.enable = enable
+        self.question = question
 
     @staticmethod
     def builtin_medicines():
-        medicine_pd = pd.read_excel(PATH_MEDICINE)
+        medicine_pd = pd.read_excel(PATH_MEDICINE, sheet_name="medicine")
         medicine_list = []
         medicine_name_list = []
+        medicine_dict = {}
 
         for _, row in medicine_pd.iterrows():
             name = row['Name']
@@ -42,8 +45,25 @@ class Medicine(object):
             research_cnt = row['Research_Count']
             enable = row['Enable']
             medicine_to_add = Medicine(name, effect, price, researchCnt=research_cnt, curCnt=0, enable=enable)
+            medicine_to_add.question = {}
+
             medicine_list.append(medicine_to_add)
             medicine_name_list.append(name)
+            medicine_dict[name] = medicine_to_add
+
+        question_pd = pd.read_excel(PATH_MEDICINE, sheet_name="question")
+        for _, row in question_pd.iterrows():
+            name = row["Name"]
+            category = row["category"]
+            question = row["question"]
+            
+            question_dict = medicine_dict[name].question
+            if category in question_dict:
+                question_dict[category].append(question)
+            else:
+                question_list = [question]
+                question_dict[category] = question_list
+
 
         return medicine_list, medicine_name_list
 
@@ -72,4 +92,6 @@ if __name__ == "__main__":
     print(medicine.price)
     print(medicine.researchCnt)
     Medicine.builtin_medicines()
-    print(medicine.get_medicine_detail(name="奥司他韦").enable)
+    ostw = medicine.get_medicine_detail(name="奥司他韦")
+    print(ostw.enable)
+    print(ostw.question)

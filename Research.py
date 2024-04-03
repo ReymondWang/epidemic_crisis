@@ -2,6 +2,8 @@ from Medicine import Medicine
 from agentscope.agents import AgentBase
 from agentscope.message import Msg
 import time
+import json
+from random import randint
 from utils import send_chat_msg, get_player_input
 from agentscope.prompt import PromptType, PromptEngine
 
@@ -30,25 +32,31 @@ class Research(AgentBase):
 
     def ask_question(self) -> dict:
         send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
-        
-        hint=f"帮我对这个药物生成知识问答型问题。药物名称是：{self.medicine.name}。请只生成一个问题。你生成的问题是："
-        prompt = self.engine.join(
-            self.sys_prompt + hint,
-            self.memory.get_memory()
-        )
+
+        category, question = self.get_random_question()
+        json_format = "{'correct_answer':'A' 'answers':[{'letter':'A', 'statement':'选项内容'}]}"
+        hint=f"""请针对{self.medicine.name}的{category}方面的问题{question}。
+            请生成A、B、C三个选项，其中两个错误的一个正确的，并且以以下的json的格式返回。
+            {json_format}
+            """
+        prompt = self.engine.join(self.sys_prompt + hint)
         response = self.model(prompt, max=3)
-        self.question = response.text
+        question_json = json.loads(self.purify_response(response_text=response.text))
+        self.correct_answer = question_json["correct_answer"]
+        answers = question_json["answers"]
+        options = ""
+        for option in answers:
+            options += option["letter"] + "：" + option["statement"] + "\n"
 
-        # 将已经问过的问题添加到memory中
-        self.memory.add(response.text)
-
-        send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
-        user_input = get_player_input(uid=self.uid)
+        question_text = f"{question}\n请在以下选项中选择：\n{options}"
+        send_chat_msg(question_text, role=self.name, uid=self.uid, avatar=self.avatar)
+        
+        content = get_player_input(uid=self.uid)
 
         msg = Msg(
             self.name,
             role="user",
-            content=user_input
+            content=content
         )
         return msg
 
@@ -60,7 +68,7 @@ class Research(AgentBase):
             send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
 
             is_correct = self.generate_jud_resp_prompt(content)
-            if is_correct == "是":
+            if is_correct:
                 self.medicine.inc_cur_cnt()
                 if self.medicine.effect == "Y":
                     self.finish_researching()
@@ -81,16 +89,11 @@ class Research(AgentBase):
 
     # 为某一个 Medicine 生成问题，此处只返回判断答案的 Prompt. 由环境 Agent 调用, -- 可能要修改
     def generate_jud_resp_prompt(self, answer):
-        print(f"----判断问题【{self.question}】的答案【{answer}】是否正确----")
-        
-        hint = f"已知当前的问题是{self.question}，请判断答案{answer}是否正确，你只能返回是或否。"
-        prompt = self.engine.join(
-            self.sys_prompt + hint,
-            self.memory.get_memory()
-        )
-        response = self.model(prompt, max=3)
-        print(f"----答案判断为{response.text}----")
-        return response.text
+        if answer not in ["A", "B", "C"]:
+            send_chat_msg("请在A、B、C选项中进行选择。", role=self.name, uid=self.uid, avatar=self.avatar)
+            return False
+        else:
+            return answer == self.correct_answer
     
     def send_respose_msg(self, result):
         if result:
@@ -113,3 +116,21 @@ class Research(AgentBase):
         )
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+
+    def get_random_question(self):
+        categories = []
+        for key in self.medicine.question:
+            categories.append(key)
+        
+        this_key = categories[randint(0, len(categories) - 1)]
+        this_questions = self.medicine.question[this_key]
+        this_question = this_questions[randint(0, len(this_questions) - 1)]
+        return this_key, this_question
+    
+    def purify_response(self, response_text:str):
+        print(f"----原始问题:{response_text}----")
+        start_idx = response_text.find("{")
+        end_idx = response_text.rfind("}")
+        purified = response_text[start_idx : end_idx + 1]
+        print(f"----净化后问题:{purified}----")
+        return purified
