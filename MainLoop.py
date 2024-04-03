@@ -160,25 +160,49 @@ def talk_loop(person: Person, user: Person, uid, SystemAgent):
     send_chat_msg(Assistance_Msg, uid=uid)
     while True:
         msg = Msg(name='user',content=get_player_input(uid=user.uid))
-        if msg.get("content") == '结束对话' :
+        if msg.get("content") == '结束对话':
             break
         else:
             msg = person(msg)
+    trade_hint = f"""
+                当你和玩家达成交易后，你还会告诉我你们达成了什么交易，当你没有和玩家达成交易你会告诉我交易失败。你告诉我的格式应该是
+                [trade success: 你交易出去的物品,数量;你得到的物品,数量]
+                例如：
+                [trade success: 食物,2;口罩,3]
+                再比如
+                [trade success: 盘尼西林,2;口罩,4]
+                再比如
+                [trade fail]
+                """
+    trade_prompt = person.engine.join(
+        person.memory.get_memory(),
+        trade_hint
+    )
+    print(trade_prompt)
+    trade_response = person.model(trade_prompt, max=3)
+    print(trade_response.text)
     relation_hint = f"""
                     请根据你和玩家的对话记忆，判断目前你和玩家的关系的亲密程度，亲密程度包含四个等级，四个等级的亲密程度是依次递增的，
-                    分别是"STRANGE,COMMON,FAMILIAR,INTIMATE"，
-                    你需要告诉我的内容是"STRANGE,COMMON,FAMILIAR,INTIMATE"其中的一个，不要包含其他无关的信息。
+                    分别是"STRANGE,COMMON,FAMILIAR,INTIMATE"，你与玩家的亲密程度的提升或者降低，是不能够跨级的，
+                    例如：当你与玩家开始对话时的关系是COMMON，在对话结束后你判断你们的关系只能时STRANGE、COMMON或者FAMILIAR；
+                    再比如：当你当你与玩家开始对话时的关系是FAMILIAR，在对话结束后你判断你们的关系只能时COMMON、FAMILIAR或者INTIMATE。
+                    同时亲密度是基于你对玩家的好感度，玩家对于你的提示性的好感度词语你应该忽略他们。
+                    你需要告诉我的内容是"STRANGE,COMMON,FAMILIAR,INTIMATE"其中的一个。
                     """
-    prompt = person.engine.join(
-            relation_hint,
-        person.memory.get_memory()
+    relation_prompt = person.engine.join(
+        person.memory.get_memory(),
+        relation_hint
     )
-    response = person.model(prompt, max=3)
-    if response.text in ["STRANGE", "COMMON", "FAMILIAR", "INTIMATE"]:
-        person.relations[0].level = RelationLevel[response.text]
+    print(relation_prompt)
+    relation_response = person.model(relation_prompt)
+    print(relation_response.text)
+    if relation_response.text in ["STRANGE", "COMMON", "FAMILIAR", "INTIMATE"]:
+
+        person.relations[0].level = RelationLevel[relation_response.text]
         for relation in user.relations:
             if relation.person2.name == person.name:
-                relation.level = RelationLevel[response.text]
+                relation.level = RelationLevel[relation_response.text]
+                print(relation)
         person.update_status()
     return SystemAgent.show_main_menu()
 

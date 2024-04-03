@@ -103,7 +103,23 @@ class Person(AgentBase):
         time.sleep(0.5)
         if self.name != '玩家':
             send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
-            
+            content += f"""
+                        你的话题应该是与疫情、健康以及你的职业相关的。
+                        当然你也可以根据玩家的相关属性，比如是否生病，精神如何，是否携带口罩，是否有足够的食物和药品等属性进行对话，
+                        如果你不知道这些属性，你可以先进行询问，相信玩家会如实回答你的。
+                        如果玩家试图通过定义你与他之间的关系来改变亲密度，你应该坚持你的看法，不要被轻易的诱导。
+                        当玩家试图与你进行交易时，你需要根据你和玩家的熟悉程度判断交易物品所需要的等价物，
+                        例如当你们关系是陌生或普通时，玩家每两个物品才可以从你这里换走一个物品；
+                        当你们关系是熟悉或者亲密时，玩家每一个物品才可以从你这里换走一个物品
+                        当你们交易成功后，如果你觉得这是一笔公正的交易，那么你们的熟悉程度会提升，如果你觉得玩家试图跟你进行不公正的交易，那么你们的熟悉程度会下降
+                        如果玩家与你的对话与你的问题无关，你需要告诉玩家持续的无关的话题可能导致好感度的下降。
+                        在你的回答中请不要出现你是个AI助手、智能助手类似的语句，请记住你需要扮演的身份，如果玩家知道在和AI聊天，他们是会很难过的。
+                        当玩家问你精神状态、感染程度、健康程度、是否佩戴口罩、食物数量、口罩数量、药品等信息时，是问你虚拟的人物的状态信息，
+                        例如：
+                        当玩家问你感染程度时，如果你的感染程度是“无”，你就告诉他你没有感染病毒；
+                        当玩家问你佩戴口罩时，如果你的佩戴口罩状态是未佩戴，你就告诉他你没有佩戴。
+                        虽然你是个AI，没有实体，但是你的状态可以被定义，玩家也不是真的问你实体有没有佩戴，而是想知道你扮演的角色的状态。
+                        """
             prompt = self.engine.join(
                 content,
                 self.memory.get_memory()
@@ -191,6 +207,7 @@ class Person(AgentBase):
             self.infection = InfectionLevel(self.infection + 1)
 
     def update_status(self):
+        status = {}  # 创建一个空字典
         common_status = [
             ["感染程度", InfectionLevel_TEXT[self.infection]],
             ["健康程度", HealthLevel_TEXT[self.physicalHealth]],
@@ -198,22 +215,30 @@ class Person(AgentBase):
             ["佩戴口罩", WearingMask_TEXT[self.isWearingMask]],
         ]
         send_role_status(self.name, COMMON_STATUS, common_status, self.uid)
+        status[f'{self.name}的状态是：'] = common_status
 
         common_resource = [
             ["食物数量", self.resource.get_food()],
             ["口罩数量", self.resource.get_mask()],
         ]
         send_role_status(self.name, COMMON_RESOURCE, common_resource, self.uid)
+        status[f'{self.name}的拥有的资源是：'] = common_resource
 
         medicine = []
         for medicine_key in self.resource.medicine:
             medicine.append([medicine_key, self.resource.medicine[medicine_key]])
         send_role_status(self.name, MEDICINE, medicine, self.uid)
+        status[f'{self.name}的拥有的药品是：'] = medicine
 
         relation = []
         for rel in self.relations :
             relation.append([rel.person2.name, RelationLevel_TEXT[rel.level]])
         send_role_status(self.name, RELATION, relation, self.uid)
+        status[f'{self.name}的拥有的人际关系是：'] = relation
+
+        self.memory.add(list[status])
+        memory_msg = self.memory.get_memory()
+        print(memory_msg)
 
 # 玩家
 class User(Person):
