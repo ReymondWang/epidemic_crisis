@@ -27,7 +27,16 @@ from utils import (
     MEDICINE, 
     RELATION
 )
-from utils import check_uuid, get_chat_msg, cycle_dots, send_chat_msg, send_player_input, send_player_msg, get_role_status
+from utils import (
+  check_uuid, 
+  get_chat_msg, 
+  cycle_dots, 
+  send_chat_msg, 
+  send_player_input, 
+  send_player_msg, 
+  get_role_status, 
+  get_wiki_content
+)
 from utils import ResetException, CheckpointArgs
 from MainLoop import main_loop
 
@@ -221,6 +230,10 @@ if __name__ == "__main__":
         medicine_id = gr.Textbox(label='medicine_id', visible=False, value=MEDICINE)
         common_resource_id = gr.Textbox(label='common_resource_id', visible=False, value=COMMON_RESOURCE)
         relation_id = gr.Textbox(label='relation_id', visible=False, value=RELATION)
+        pencillin_name = gr.Textbox(label='pencillin_name', visible=False, value="盘尼西林")
+        oseltamivir_name = gr.Textbox(label='oseltamivir_name', visible=False, value="奥司他韦")
+        rna_name = gr.Textbox(label='rna_name', visible=False, value="RNA疫苗")
+        disinfector_name = gr.Textbox(label='disinfector_name', visible=False, value="强力消毒液")
 
         tabs = gr.Tabs(visible=True)
         with tabs:
@@ -237,7 +250,7 @@ if __name__ == "__main__":
         with game_tabs:
             main_tab = gr.Tab('主界面', id=0)
             status_tab = gr.Tab('角色状态', id=1)
-            formula_tab = gr.Tab('配方', id=2)
+            wiki_tab = gr.Tab('百科', id=2)
             with main_tab:
                 with gr.Row():
                     with gr.Column(min_width=270):
@@ -442,7 +455,22 @@ if __name__ == "__main__":
                                             col_count=2, 
                                             row_count=3,
                                         )
-
+            with wiki_tab:
+                medicine_tabs = gr.Tabs()
+                with medicine_tabs:
+                    penicillin_tab = gr.Tab("盘尼西林", id=0)
+                    oseltamivir_tab = gr.Tab("奥司他韦", id=1)
+                    rna_tab = gr.Tab("RNA疫苗", id=2)
+                    disinfector_tab = gr.Tab("强力消毒剂", id=3)
+                    with penicillin_tab:
+                        pencillin_content = gr.Markdown()
+                    with oseltamivir_tab:
+                        oseltamivir_content = gr.Markdown()
+                    with rna_tab:
+                        rna_content = gr.Markdown()
+                    with disinfector_tab:
+                        disinfector_content = gr.Markdown()
+                
             with gr.Row():
                 return_welcome_button = gr.Button(value="↩️返回首页")
 
@@ -525,6 +553,11 @@ if __name__ == "__main__":
         king_tab.select(fn=get_role_status, inputs=[king_id, common_resource_id, uuid], outputs=[king_resource_df])
         king_tab.select(fn=get_role_status, inputs=[king_id, medicine_id, uuid], outputs=[king_medicine_df])
         king_tab.select(fn=get_role_status, inputs=[king_id, relation_id, uuid], outputs=[king_relation_df])
+
+        wiki_tab.select(fn=get_wiki_content, inputs=[pencillin_name, uuid], outputs=[pencillin_content])
+        wiki_tab.select(fn=get_wiki_content, inputs=[oseltamivir_name, uuid], outputs=[oseltamivir_content])
+        wiki_tab.select(fn=get_wiki_content, inputs=[rna_name, uuid], outputs=[rna_content])
+        wiki_tab.select(fn=get_wiki_content, inputs=[disinfector_name, uuid], outputs=[disinfector_content])
 
     env.queue()
     env.launch()

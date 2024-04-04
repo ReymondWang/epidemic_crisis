@@ -2,6 +2,7 @@ import time
 import json
 import inquirer
 import sys
+from collections import defaultdict
 from random import randint, random
 from SystemAgent import SystemAgent
 from Resource import Resource
@@ -13,18 +14,9 @@ from Research import Research
 from enums import InfectionLevel, EffectLevel, RelationLevel
 from utils import SYS_MSG_PREFIX
 from utils import InfectionLevel_TEXT
-from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input
+from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input, get_medicine
 from agentscope.message import Msg
 from Relation import Relation
-
-#----定义药品相关的信息 start----
-medicine_list, _ = Medicine.builtin_medicines()
-
-medicine_dic = {}
-for medicine in medicine_list:
-    medicine_dic[medicine.name] = medicine
-
-#----定义药品相关的信息 end----
 
 #----定义病毒相关的信息 start----
 
@@ -232,6 +224,7 @@ def show_available_medicine(uid):
     显示用户当前可以使用的药品
     """
     medicine_name_list = []
+    medicine_list = get_medicine(uid=uid)
     for medicine in medicine_list:
         if medicine.enable == "Y":
             medicine_name_list.append(medicine.name)
@@ -280,6 +273,11 @@ def main_loop(args) -> None:
         "talking": ["小美", "花姐", "凯哥"]
     }
     
+    medicine_list = get_medicine(args.uid)
+    medicine_dic = {}
+    for medicine in medicine_list:
+        medicine_dic[medicine.name] = medicine
+
     #----系统Agent start----
     systemAgent = SystemAgent(
         name="游戏精灵", 

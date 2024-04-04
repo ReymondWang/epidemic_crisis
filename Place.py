@@ -65,7 +65,7 @@ class Place(AgentBase):
             elif content == "***success***":
                 content = self.send_chat(hint= f"请说一句{content}成功，感谢惠顾的话，50字以内")
             elif content == "未知物品":
-                content = self.send_chat(hint= f"请说一句因为客人要购买的动没有的话，并告诉客人你卖的是{content[2:4]}，请客人重新购买，50字以内")
+                content = self.send_chat(hint= f"请说一句你没有客人要购买的物品的话，并告诉客人你卖的是{content[2:4]}，请客人重新购买，50字以内")
             else:
                 res = self.get_number(content)
                 if res["success"] == "Y":

@@ -5,9 +5,11 @@ from multiprocessing import Queue
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import List
+from Medicine import Medicine
 
 SYS_MSG_PREFIX = '【系统】'
 DEFAULT_AGENT_IMG_DIR = "./assets/"
+DEFAULT_DATA_DIR = "./data/"
 
 COMMON_STATUS = "common_status"
 COMMON_RESOURCE = "common_resource"
@@ -50,6 +52,10 @@ def init_uid_queues():
 def init_role_status_dict():
     return {}
 
+def init_medicine_dict():
+    return {}
+
+glb_medicine_dict = defaultdict(init_medicine_dict)
 glb_uid_dict = defaultdict(init_uid_queues)
 user_role_status_dict = defaultdict(init_role_status_dict)
 
@@ -71,6 +77,16 @@ def check_uuid(uid):
         else:
             uid = 'local_user'
     return uid
+
+def get_medicine(uid):
+    uid = check_uuid(uid=uid)
+    global glb_medicine_dict
+    if uid in glb_medicine_dict:
+        return glb_medicine_dict[uid]
+    else:
+        medicine_list, _ = Medicine.builtin_medicines()
+        glb_medicine_dict[uid] = medicine_list
+        return medicine_list
 
 def get_chat_msg(uid=None):
     global glb_uid_dict
@@ -182,6 +198,22 @@ def get_role_status(role: str, type: str, uid: str=None) -> List[List]:
         ret = user_role_status_dict[uid][role][type]
         print(f"get_role_status: {ret}")
         return ret
+
+def get_wiki_content(name, uid):
+    uid = check_uuid(uid)
+    content = ""
+    unlocked = False
+    medicine_list = get_medicine(uid)
+    for medicine in medicine_list:
+        if medicine.name == name:
+            unlocked = medicine.enable == "Y"
+            break
+    if unlocked:
+        with open(os.path.join(DEFAULT_DATA_DIR, name + ".md"), mode="r") as file:
+            content = file.read()
+    else:
+        content = f"{name}尚没有解锁😅，请在药品研发中努力解锁吧💪"
+    return content
 
 @dataclass
 class CheckpointArgs:

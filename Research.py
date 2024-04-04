@@ -119,7 +119,7 @@ class Research(AgentBase):
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
         
-        sys_success = f"{SYS_MSG_PREFIX}药品{self.medicine.name}研发成功，输入【结束】回到主菜单。"
+        sys_success = f"{SYS_MSG_PREFIX}药品{self.medicine.name}研发成功，相关百科解锁，输入【结束】回到主菜单。"
         send_chat_msg(sys_success, flushing=False, uid=self.uid)
 
     def get_random_question(self):
