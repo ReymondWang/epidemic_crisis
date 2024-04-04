@@ -122,7 +122,7 @@ class SystemAgent(AgentBase):
         for place in self.place_list:
             place.virus_growing()
 
-        send_chat_msg("**speak**", role="小精灵", uid=self.uid, avatar="./assets/system.png")
+        send_chat_msg("**speak**", role="游戏精灵", uid=self.uid, avatar="./assets/system.png")
 
         if self.user.isDead:
             dead_hint = "主角已经死亡，请生成一段游戏失败的文字，300字以内"
@@ -131,7 +131,7 @@ class SystemAgent(AgentBase):
                 self.memory.get_memory()
             )
             response = self.model(prompt, max=3)
-            send_chat_msg(response.text, role="小精灵", uid=self.uid, avatar="./assets/system.png")
+            send_chat_msg(response.text, role="游戏精灵", uid=self.uid, avatar="./assets/system.png")
             return Msg(name="user", content="***game over***")
         else:
             start_hint = "请生成一个温馨的早上的描述画面，300字以内。"
@@ -140,7 +140,7 @@ class SystemAgent(AgentBase):
                 self.memory.get_memory()
             )
             response = self.model(prompt, max=3)
-            send_chat_msg(response.text, role="小精灵", uid=self.uid, avatar="./assets/system.png")
+            send_chat_msg(response.text, role="游戏精灵", uid=self.uid, avatar="./assets/system.png")
             return self.show_main_menu()
         
     def show_main_menu(self) -> Msg:

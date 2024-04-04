@@ -282,7 +282,7 @@ def main_loop(args) -> None:
     
     #----系统Agent start----
     systemAgent = SystemAgent(
-        name="小精灵", 
+        name="游戏精灵", 
         model_config_name="qwen-max", 
         sys_prompt="你是一个游戏的系统控制角色，负责推进游戏的进行，并且生成一些相关背景。",
         round_menu_dict=round_menu_dict,
@@ -402,7 +402,7 @@ def main_loop(args) -> None:
         name="研发助手",
         model_config_name="qwen-max",
         sys_prompt="你是一个辅助药品研发的助手，知道很多有用的药品知识。",
-        avatar="./assets/system.png",
+        avatar="./assets/assistant.jpg",
         uid=args.uid
     )
 

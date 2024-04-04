@@ -5,6 +5,7 @@ import time
 import json
 from random import randint
 from utils import send_chat_msg, get_player_input
+from utils import SYS_MSG_PREFIX
 from agentscope.prompt import PromptType, PromptEngine
 
 
@@ -70,7 +71,7 @@ class Research(AgentBase):
             is_correct = self.generate_jud_resp_prompt(content)
             if is_correct:
                 self.medicine.inc_cur_cnt()
-                if self.medicine.effect == "Y":
+                if self.medicine.enable == "Y":
                     self.finish_researching()
                     content="***end***"
                 else:
@@ -98,24 +99,28 @@ class Research(AgentBase):
     def send_respose_msg(self, result):
         if result:
             hint = f"玩家的问题回答正确，说一段奖励的话，并进入下一回合研发，50字以内。"
+            sys_hint = f"""{SYS_MSG_PREFIX}药品{self.medicine.name}研发成功{self.medicine.curCnt}回合，还需{self.medicine.researchCnt - self.medicine.curCnt}回合，输入【结束】停止。"""
         else:
             hint = f"玩家的问题回答错误，说一段安慰的话，并鼓励继续努力，50字以内。"
+            sys_hint = f"{SYS_MSG_PREFIX}您可以继续回答问题，或输入【结束】停止。"
         
         prompt = self.engine.join(
-            self.sys_prompt + hint,
-            self.memory.get_memory()
+            self.sys_prompt + hint
         )
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+        send_chat_msg(sys_hint, flushing=False, uid=self.uid)
 
     def finish_researching(self):
         hint = f"药品{self.medicine.name}已经已经研发成功，请说一段奖励的话，50字以内。"
         prompt = self.engine.join(
-            self.sys_prompt + hint,
-            self.memory.get_memory()
+            self.sys_prompt + hint
         )
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+        
+        sys_success = f"{SYS_MSG_PREFIX}药品{self.medicine.name}研发成功，输入【结束】回到主菜单。"
+        send_chat_msg(sys_success, flushing=False, uid=self.uid)
 
     def get_random_question(self):
         categories = []
