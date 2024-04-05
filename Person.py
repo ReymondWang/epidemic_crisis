@@ -138,55 +138,22 @@ class Person(AgentBase):
         item_name = item_arr[0]
         item_count = int(item_arr[1])
         
-        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        print("------判断物资类型------" + item_name)
+        if item_name == "食物":
+            item_name = "food"
+        elif item_name == "口罩":
+            item_name = "mask"
 
-        hint = f"""现在要判断一个物品的属于哪个类别。
-        例子1
-        食物 食物
-        例子2
-        面包 食物
-        例子3
-        N95 口罩
-        例子4
-        口罩 口罩
-        例子5
-        青霉素 盘尼西林
-        例子6
-        奥司他韦 奥司他韦
-        例子7
-        RNA RNA疫苗
-        例子8
-        强力消毒液 强力消毒液
-        请在food, mask, 盘尼西林, 奥司他韦, RNA疫苗, 强力消毒液这六个类别内返回，并且只返回类别名称。
-        """
-        prompt = self.engine.join(
-            hint + "\n" + item_name
-        )
-        response = self.model(prompt, max=3)
-        res_str = response.text
-        print("------判断物资类型------" + res_str)
-        if res_str == "食物":
-            res_str = "food"
-        elif res_str == "口罩":
-            res_str = "mask"
-
-        if res_str == "food":
+        if item_name == "food":
             self.resource.inc_food(item_count)
             res_str = "***success***"
-        elif res_str == "mask":
+        elif item_name == "mask":
             self.resource.inc_mask(item_count)
             res_str = "***success***"
-        elif res_str in ["盘尼西林", "奥司他韦", "RNA疫苗", "强力消毒液"]:
-            self.resource.inc_medicine(res_str, item_count)
-            res_str = "***success***"
         else:
-            err_hint = f"因为没有判断清楚对方给的到底是食物、口罩还是要皮，说一句要重新购买的话，并且告诉对方给出的是{res_str}。"
-            prompt = self.engine.join(
-                err_hint
-            )
-            response = self.model(prompt, max=3)
-            res_str = response.text
-        
+            self.resource.inc_medicine(item_name, item_count)
+            res_str = "***success***"
+
         msg = Msg(
             name=self.name,
             role="user",
