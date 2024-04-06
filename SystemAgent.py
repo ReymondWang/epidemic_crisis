@@ -75,6 +75,8 @@ class SystemAgent(AgentBase):
                         return self.show_main_menu()
                     elif x.get("content") == "百货商场" and content == "":
                         content = "百货商场"
+                    elif x.get("content") == "使用资源" and content == "":
+                        return self.show_use_resource_menu()
 
                 if not hasattr(self, "model") or len(content) == 0:
                     break
@@ -113,9 +115,13 @@ class SystemAgent(AgentBase):
         self.user.gen_random_resource()
         self.user.virus_growing()
         self.user.die()
+        self.user.isWearingMask = False
         self.user.update_status()
         for person in self.person_list:
             person.gen_random_resource()
+            person.eating_food()
+            person.wearing_mask()
+            person.eating_medicine()
             person.virus_growing()
             person.die()
             person.update_status()
@@ -284,6 +290,33 @@ class SystemAgent(AgentBase):
         send_chat_msg("**end_choosing**", uid=self.uid)
         content = '交谈：' +  talk[0]
         return Msg(name="user", content=content)
+
+    def show_use_resource_menu(self) -> Msg:
+        use_resource_list = self.round_menu_dict["using_resource"]
+        if "主菜单" not in use_resource_list:
+            use_resource_list.append("主菜单")
+
+        choose_resource = f""" {SYS_MSG_PREFIX}请选择想要使用的资源: <select-box shape="card" 
+            type="checkbox" item-width="auto" 
+            options='{json.dumps(use_resource_list, ensure_ascii=False)}' 
+            select-once></select-box>"""
+
+        send_chat_msg(
+            choose_resource,
+            flushing=False,
+            uid=self.uid,
+        )
+
+        use_resource = []
+        while True:
+            sel_use_resource = get_player_input(uid=self.uid)
+            if isinstance(sel_use_resource, str):
+                send_chat_msg(f" {SYS_MSG_PREFIX}请在列表中进行选择。", uid=self.uid)
+                continue
+            use_resource = sel_use_resource
+            break
+        send_chat_msg("**end_choosing**", uid=self.uid)
+        return Msg(name="user", content=use_resource[0])
     
 if __name__ == "__main__":
     round_menu_dict = {

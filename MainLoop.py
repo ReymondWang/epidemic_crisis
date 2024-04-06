@@ -93,7 +93,7 @@ def infect(obj1: any, obj2: any):
             target.infection = InfectionLevel.TINY
     
 
-def place_loop(place: Place, user: Person, medicine_dic:dict, uid):
+def place_loop(place: Place, user: Person, medicine_dic:dict, uid, SystemAgent):
     """
     针对场所的主要循环，负责用户和各个场所的互动。
     """
@@ -104,7 +104,7 @@ def place_loop(place: Place, user: Person, medicine_dic:dict, uid):
     while True:
         msg = place(msg)
         if msg.get("content") == "***kill_virus***":
-            medicine_name = show_available_medicine(uid)
+            medicine_name = show_available_medicine(uid,SystemAgent= SystemAgent)
             if user.resource.get_medicine(medicine_name) > 0:
                 san_res = place.sanitize(medicine_dic[medicine_name])
                 if san_res:
@@ -274,7 +274,7 @@ def research_loop(research: Research, medicine: Medicine, uid):
         )
 
 
-def show_available_medicine(uid):
+def show_available_medicine(uid, SystemAgent):
     """
     显示用户当前可以使用的药品
     """
@@ -283,6 +283,8 @@ def show_available_medicine(uid):
     for medicine in medicine_list:
         if medicine.enable == "Y":
             medicine_name_list.append(medicine.name)
+    if "主菜单" not in medicine_list:
+        medicine_name_list.append("主菜单")
     choose_medicine = f""" {SYS_MSG_PREFIX}请选择要使用: <select-box shape="card" 
         type="checkbox" item-width="auto" 
         options='{json.dumps(medicine_name_list, ensure_ascii=False)}' 
@@ -301,9 +303,11 @@ def show_available_medicine(uid):
         medicine = sel_medicine
         break
     send_chat_msg("**end_choosing**", uid=uid)
-    send_player_msg(msg=medicine[0], uid=uid)
-    
-    return medicine[0]
+    if medicine[0] == "主菜单":
+        return SystemAgent.show_main_menu()
+    else:
+        send_player_msg(msg=medicine[0], uid=uid)
+        return medicine[0]
             
 #----定义主要环节的互动方法 start----
 
@@ -322,10 +326,11 @@ def main_loop(args) -> None:
     send_chat_msg(game_description, uid=args.uid)
     
     round_menu_dict = {
-        "menu": ["研发药品", "采购物资", "与村民交谈", "开始新回合"],
+        "menu": ["研发药品", "采购物资", "与村民交谈", "使用资源", "开始新回合"],
         "inspection": ["自己", "小美", "花姐", "凯哥"],
         "place": ["百货商场", "大药房", "医院"],
-        "talking": ["小美", "花姐", "凯哥"]
+        "talking": ["小美", "花姐", "凯哥"],
+        "using_resource": ["使用食物", "使用口罩", "使用药品"]
     }
     
     medicine_list = get_medicine(args.uid)
@@ -479,7 +484,7 @@ def main_loop(args) -> None:
         if content == "***game over***":
             break
         if content in place_dic:
-            msg = place_loop(place_dic[content], user, medicine_dic=medicine_dic, uid=args.uid)
+            msg = place_loop(place_dic[content], user, medicine_dic=medicine_dic, uid=args.uid, SystemAgent=SystemAgent)
         if '查看状态' in content:
             if content[5:] in npc_dict :
                 msg = inspection_loop(npc_dict[content[5:]], uid=args.uid, SystemAgent=systemAgent)
@@ -490,4 +495,51 @@ def main_loop(args) -> None:
                 msg = talk_loop(npc_dict[content[3:]], user, uid=args.uid, SystemAgent=systemAgent)
         if content in medicine_dic:
             msg = research_loop(research, medicine_dic[content], uid=args.uid)
-            
+        if content == "使用食物":
+            if user.physicalHealth == 5:
+                send_chat_msg("当前无需使用食物", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+            else:
+                if user.resource.get_food() == 0:
+                    send_chat_msg("当前你没有食物，可以通过去商场购买或者和村民交换获取哦", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+                else:
+                    user.resource.dec_food(1)
+                    user.physicalHealth += 1
+                    user.update_status()
+                    msg = f'你成功使用了1个食物，当前你的健康状态是{HealthLevel_TEXT[user.physicalHealth]}'
+                    send_chat_msg(msg=msg, role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+        if content == "使用口罩":
+            if user.isWearingMask:
+                send_chat_msg("当前无需使用口罩", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+            else:
+                if user.resource.get_mask() == 0:
+                    send_chat_msg("当前你没有口罩，可以通过去药店购买或者和村民交换获取哦", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+                else:
+                    user.resource.dec_mask(1)
+                    user.isWearingMask = True
+                    user.update_status()
+                    msg = f'你成功使用了1个口罩，当前你的已佩戴口罩'
+                    send_chat_msg(msg=msg, role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+
+        if content == "使用药品":
+            if user.infection == 0:
+                send_chat_msg("当前无需使用药品", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+            else:
+                medicine_name = show_available_medicine(args.uid, SystemAgent=systemAgent)
+                if user.resource.get_medicine(medicine_name) > 0:
+                    user.resource.dec_medicine(medicine_name, 1)
+                    if medicine_name == '盘尼西林':
+                        user.infection -= 1
+                        if user.infection < 0:
+                            user.infection = 0
+                    elif medicine_name == '奥司他韦':
+                        user.infection -= 2
+                        if user.infection < 0:
+                            user.infection = 0
+                    elif medicine_name == 'RNA疫苗':
+                        user.infection -= 2
+                        if user.infection < 0:
+                            user.infection = 0
+                    elif medicine_name == 'RNA疫苗':
+                        send_chat_msg("强力消毒液只能用于场所消毒，你无法使用", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+
+

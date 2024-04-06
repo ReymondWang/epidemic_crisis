@@ -203,7 +203,6 @@ class Person(AgentBase):
         )
 
         return msg
-    
     def dec_resource(self, resource_name:str , resource_number: int):
         if resource_name == '食物':
             self.resource.dec_food(resource_number)
@@ -222,6 +221,42 @@ class Person(AgentBase):
     def virus_growing(self):
         if self.infection != InfectionLevel.CLEAN and self.infection != InfectionLevel.DEAD:
             self.infection = InfectionLevel(self.infection + 1)
+
+    def eating_food(self):
+        if self.resource.get_food() > 0:
+            self.resource.dec_food(1)
+            self.physicalHealth += 1
+            if self.physicalHealth > 5:
+                self.physicalHealth = 5
+        else:
+            self.physicalHealth -= 1
+            if self.physicalHealth < 0:
+                self.physicalHealth = 0
+    def wearing_mask(self):
+        self.isWearingMask = False
+        if self.resource.get_mask() > 0:
+            self.isWearingMask = True
+            self.resource.dec_mask(1)
+    def eating_medicine(self):
+        while self.infection != 0:
+            if self.resource.get_medicine("盘尼西林") > 0:
+                self.resource.dec_medicine("盘尼西林", 1)
+                self.infection -= 1
+                if self.infection < 0:
+                    self.infection = 0
+            elif self.resource.get_medicine("奥司他韦") > 0:
+                self.resource.dec_medicine("奥司他韦", 1)
+                self.infection -= 2
+                if self.infection < 0:
+                    self.infection = 0
+            elif self.resource.get_medicine("RNA疫苗") > 0:
+                self.resource.dec_medicine("RNA疫苗", 1)
+                self.infection -= 2
+                if self.infection < 0:
+                    self.infection = 0
+            else:
+                break
+
 
     def update_status(self):
         status = {}  # 创建一个空字典
