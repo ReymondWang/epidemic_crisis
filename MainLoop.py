@@ -17,7 +17,7 @@ from utils import InfectionLevel_TEXT
 from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input, get_medicine
 from agentscope.message import Msg
 from Relation import Relation
-
+import re
 #----定义病毒相关的信息 start----
 
 place_infection_feature = {
@@ -138,65 +138,120 @@ def inspection_loop(person: Person, uid, SystemAgent):
     person.self_introduction()
     return SystemAgent.show_main_menu()
 
+def extract_trade_info(sentence):
+    pattern = r"交易成功，你付出了(\d+)个(\w+)，得到了(\d+)个(\w+)"
+    match = re.search(pattern, sentence)
+    if match:
+        pay_number = match.group(1)   # 提取出的数字A
+        pay_thing = match.group(2)   # 提取出的物品B
+        get_number = match.group(3)   # 提取出的数字C
+        get_thing = match.group(4)   # 提取出的物品D
+        return pay_number, pay_thing, get_number, get_thing
+    else:
+        return None, None, None, None
 
 def talk_loop(person: Person, user: Person, uid, SystemAgent):
     """
     针对人员对话的主要循环，负责用户与各个角色，并根据对话结果提升亲密度。
     """
-    msg = person.welcome()
+    person.welcome()
     infect(person, user)
-    Assistance_Msg = f"""
-                    {SYS_MSG_PREFIX}您当前与{person.name}的关系为：{person.relations[0].level.name}\n
-                    如果您想结束当前对话请输入：结束对话
-                    """
-    send_chat_msg(Assistance_Msg, uid=uid)
-    while True:
-        msg = Msg(name='user',content=get_player_input(uid=user.uid))
-        if msg.get("content") == '结束对话':
-            break
-        else:
-            msg = person(msg)
-    trade_hint = f"""
-                当你和玩家达成交易后，你还会告诉我你们达成了什么交易，当你没有和玩家达成交易你会告诉我交易失败。你告诉我的格式应该是
-                [trade success: 你交易出去的物品,数量;你得到的物品,数量]
-                例如：
-                [trade success: 食物,2;口罩,3]
-                再比如
-                [trade success: 盘尼西林,2;口罩,4]
-                再比如
-                [trade fail]
-                """
-    trade_prompt = person.engine.join(
-        person.memory.get_memory(),
-        trade_hint
-    )
-    print(trade_prompt)
-    trade_response = person.model(trade_prompt, max=3)
-    print(trade_response.text)
-    relation_hint = f"""
-                    请根据你和玩家的对话记忆，判断目前你和玩家的关系的亲密程度，亲密程度包含四个等级，四个等级的亲密程度是依次递增的，
-                    分别是"STRANGE,COMMON,FAMILIAR,INTIMATE"，你与玩家的亲密程度的提升或者降低，是不能够跨级的，
-                    例如：当你与玩家开始对话时的关系是COMMON，在对话结束后你判断你们的关系只能时STRANGE、COMMON或者FAMILIAR；
-                    再比如：当你当你与玩家开始对话时的关系是FAMILIAR，在对话结束后你判断你们的关系只能时COMMON、FAMILIAR或者INTIMATE。
-                    同时亲密度是基于你对玩家的好感度，玩家对于你的提示性的好感度词语你应该忽略他们。
-                    你需要告诉我的内容是"STRANGE,COMMON,FAMILIAR,INTIMATE"其中的一个。
-                    """
-    relation_prompt = person.engine.join(
-        person.memory.get_memory(),
-        relation_hint
-    )
-    print(relation_prompt)
-    relation_response = person.model(relation_prompt)
-    print(relation_response.text)
-    if relation_response.text in ["STRANGE", "COMMON", "FAMILIAR", "INTIMATE"]:
 
-        person.relations[0].level = RelationLevel[relation_response.text]
-        for relation in user.relations:
-            if relation.person2.name == person.name:
-                relation.level = RelationLevel[relation_response.text]
-                print(relation)
-        person.update_status()
-    return SystemAgent.show_main_menu()
+    msg = person.show_main_menu()
+    if msg.get("content") == "聊天":
+        Assistance_Msg = f"""
+                        {SYS_MSG_PREFIX}您当前与{person.name}的关系为：{person.relations[0].level.name}\n
+                        如果您想结束当前对话请输入：结束对话
+                        """
+        send_chat_msg(Assistance_Msg, uid=SystemAgent.uid)
+        person.start_talking()
+        while True:
+            msg = get_player_input(uid=user.uid)
+            if msg == '结束对话':
+                break
+            else:
+                msg = Msg(name='user',content= "聊天：" + msg)
+                person(msg)
+        relation_hint = f"""
+                            请根据你和玩家的对话记忆，判断目前你和玩家的关系的亲密程度，亲密程度包含四个等级，四个等级的亲密程度是依次递增的，
+                            分别是"STRANGE,COMMON,FAMILIAR,INTIMATE"，你与玩家的亲密程度的提升或者降低，是不能够跨级的，
+                            例如：当你与玩家开始对话时的关系是COMMON，在对话结束后你判断你们的关系只能时STRANGE、COMMON或者FAMILIAR；
+                            再比如：当你当你与玩家开始对话时的关系是FAMILIAR，在对话结束后你判断你们的关系只能时COMMON、FAMILIAR或者INTIMATE。
+                            同时亲密度是基于你对玩家的好感度，玩家对于你的提示性的好感度词语你应该忽略他们。
+                            你需要告诉我的内容是"STRANGE,COMMON,FAMILIAR,INTIMATE"其中的一个。
+                            """
+        relation_prompt = person.engine.join(
+                relation_hint,
+                person.memory.get_memory()
+        )
+        relation_response = person.model(relation_prompt)
+        if relation_response.text in ["STRANGE", "COMMON", "FAMILIAR", "INTIMATE"]:
+            person.relations[0].level = RelationLevel[relation_response.text]
+            for relation in user.relations:
+                if relation.person2.name == person.name:
+                    relation.level = RelationLevel[relation_response.text]
+                    print(relation)
+            person.update_status()
+        return SystemAgent.show_main_menu()
+    elif msg.get("content") == '交换物品':
+        Assistance_Msg = f"""
+                                {SYS_MSG_PREFIX}您当前与{person.name}的关系为：{person.relations[0].level.name}\n
+                                如果您想结束当前对话请输入：结束对话
+                                如果您想要交换物品请输入：我想用A个B和你换C个D，可以吗？
+                                """
+        send_chat_msg(Assistance_Msg, uid=SystemAgent.uid)
+        person.start_trading()
+        while True:
+            msg = get_player_input(uid=user.uid)
+            if msg == '结束对话':
+                person.memory.clear()
+                person.update_status()
+                break
+            else:
+                msg = Msg(name='user', content="交换物品：" + msg)
+                msg = person(msg)
+                content = msg.get("content")
+                if "交易成功" in content :
+                    [pay_number, pay_thing, get_number, get_thing] = extract_trade_info(content)
+                    if pay_thing == "食物":
+                        if user.resource.get_food() < int(pay_number) :
+                            content = "由于你没有足够数量的食物，交易失败"
+                        else:
+                            user.resource.dec_food(int(pay_number))
+                            user_add_item = get_thing + ':' + get_number
+                            user.add_resource(user_add_item)
+                            person.dec_resource(get_thing,int(get_number))
+                            person.resource.inc_food(int(pay_number))
+                            user.update_status()
+                            person.update_status()
+                    elif pay_thing == "口罩":
+                        if user.resource.get_mask() < int(pay_number) :
+                            content = "由于你没有足够数量的口罩，交易失败"
+                        else:
+                            user.resource.dec_mask(int(pay_number))
+                            user_add_item = get_thing + ':' + get_number
+                            user.add_resource(user_add_item)
+                            person.dec_resource(get_thing,int(get_number))
+                            person.resource.inc_mask(int(pay_number))
+                            user.update_status()
+                            person.update_status()
+                    elif pay_thing in ["盘尼西林", "奥司他韦", "RNA疫苗", "强力消毒液"]:
+                        if user.resource.get_medicine(pay_thing) < int(pay_number) :
+                            content = f'由于你没有足够数量的{pay_thing}，交易失败'
+                        else:
+                            user.resource.dec_medicine(pay_thing, int(pay_number))
+                            user_add_item = get_thing + ':' + get_number
+                            user.add_resource(user_add_item)
+                            person.dec_resource(get_thing, int(get_number))
+                            person.resource.inc_medicine(pay_thing, int(pay_number))
+                            user.update_status()
+                            person.update_status()
+                    send_chat_msg(content, role=person.name, uid=person.uid, avatar=person.avatar)
+                else:
+                    send_chat_msg(content, role=person.name, uid=person.uid, avatar=person.avatar)
+        return SystemAgent.show_main_menu()
+    elif  msg.get("content") == '结束':
+        return SystemAgent.show_main_menu()
 
 
 def research_loop(research: Research, medicine: Medicine, uid):
@@ -340,6 +395,11 @@ def main_loop(args) -> None:
     #----场所Agent end----
     
     #----人员Agent start----
+    person_menu_dict = {
+        "beauty": ["交换物品", "聊天", "结束"],
+        "flower": ["交换物品", "聊天", "结束"],
+        "king": ["交换物品", "聊天", "结束"],
+    }
     beauty = MallStaff(
         name="小美",
         model_config_name="qwen-max",
@@ -347,9 +407,10 @@ def main_loop(args) -> None:
         resource=Resource(),
         virus=people_virus,
         avatar="./assets/npc1.jpg",
-        uid=args.uid
+        uid=args.uid,
+        menu_list=person_menu_dict["beauty"]
     )
-    
+
     flower = DrugstoreStaff(
         name="花姐",
         model_config_name="qwen-max",
@@ -357,9 +418,10 @@ def main_loop(args) -> None:
         resource=Resource(),
         virus=people_virus,
         avatar="./assets/npc2.jpg",
-        uid=args.uid
+        uid=args.uid,
+        menu_list=person_menu_dict["flower"]
     )
-    
+
     king = Doctor(
         name="凯哥",
         model_config_name="qwen-max",
@@ -367,7 +429,8 @@ def main_loop(args) -> None:
         resource=Resource(),
         virus=people_virus,
         avatar="./assets/npc3.jpg",
-        uid=args.uid
+        uid=args.uid,
+        menu_list=person_menu_dict["king"]
     )
     king.set_medicine_list(medicine_list)
     

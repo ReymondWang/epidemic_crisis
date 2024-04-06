@@ -4,13 +4,13 @@ from enums import InfectionLevel, HealthLevel
 from Resource import Resource
 from Virus import Virus
 from agentscope.message import Msg
-from utils import send_chat_msg, send_role_status
+from utils import send_chat_msg, send_role_status, get_player_input, send_player_msg
 from utils import SYS_MSG_PREFIX, COMMON_STATUS, COMMON_RESOURCE, MEDICINE, RELATION
 from utils import HealthLevel_TEXT, InfectionLevel_TEXT, WearingMask_TEXT, RelationLevel_TEXT
 from agentscope.prompt import PromptType, PromptEngine
 import time
 import random
-
+import json
 class Person(AgentBase):
     def __init__(
         self, 
@@ -21,7 +21,8 @@ class Person(AgentBase):
         resource: Resource = None, 
         virus: Virus = None, 
         avatar: str = "",
-        uid: str = None
+        uid: str = None,
+        menu_list: Optional[list] = None
     ) -> None:
         super().__init__(name, sys_prompt, model_config_name)
         self.engine = PromptEngine(self.model, prompt_type=PromptType.LIST)
@@ -30,7 +31,7 @@ class Person(AgentBase):
         self.virus = virus
         self.avatar = avatar
         self.uid = uid
-        
+        self.menu_list = menu_list,
         self._init_status()
     
     def _init_status(self):
@@ -80,38 +81,53 @@ class Person(AgentBase):
         msg = response.text + '\n' + information
         send_chat_msg(msg, role=self.name, uid=self.uid, avatar=self.avatar)
 
-    def welcome(self) -> Msg:
+    def welcome(self):
         send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
         
         if self.relations[0].level == 1:
-            hint = self.sys_prompt + f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话，并且开启一个话题。'
+            hint = self.sys_prompt + f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话。'
         else:
-            hint = f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话，并且开启一个话题。'
+            hint = f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话。'
         prompt = self.engine.join(hint,self.memory.get_memory())
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
-        msg = Msg(
-            name=self.name,
-            content=response.text
+
+    def start_talking(self):
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        hint = f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一个日常对话的问题，这个问题应该是与疫情、健康、你的职业或者你的状态相关的,问题控制在100字以内。'
+        prompt = self.engine.join(
+            hint,
+            self.memory.get_memory()
         )
-        return msg
-    
+        response = self.model(prompt, max=3)
+        send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+    def start_trading(self):
+        send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+        hint = f"""
+               请告诉玩家你目前有多少食物、多少口罩、多少药品，当资源数量为0时，你可以不说这项，或者告诉玩家你没有该资源，
+               并询问玩家有什么资源，想要交换什么资源。
+               例子1：
+               当你的状态显示你有3个食物，2个口罩，你可以说“我有3个食物，2个口罩，你想和我交换什么吗？”
+               例子2：
+               当你的状态显示你有2个口罩，1个盘尼西林，你可以说“我有2个口罩，1个盘尼西林，你想和我交换什么吗？”
+                """
+        prompt = self.engine.join(
+            hint,
+            self.memory.get_memory()
+        )
+        response = self.model(prompt, max=3)
+        send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+
     def reply(self, x: dict = None) -> dict:
         if x is not None:
             self.memory.add(x)
         content = x.get("content")
         time.sleep(0.5)
         if self.name != '玩家':
-            send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
-            content += f"""
-                        你的话题应该是与疫情、健康以及你的职业相关的。
-                        当然你也可以根据玩家的相关属性，比如是否生病，精神如何，是否携带口罩，是否有足够的食物和药品等属性进行对话，
-                        如果你不知道这些属性，你可以先进行询问，相信玩家会如实回答你的。
+            if content[0:2] == '聊天':
+                send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+                hint = f"""
                         如果玩家试图通过定义你与他之间的关系来改变亲密度，你应该坚持你的看法，不要被轻易的诱导。
-                        当玩家试图与你进行交易时，你需要根据你和玩家的熟悉程度判断交易物品所需要的等价物，
-                        例如当你们关系是陌生或普通时，玩家每两个物品才可以从你这里换走一个物品；
-                        当你们关系是熟悉或者亲密时，玩家每一个物品才可以从你这里换走一个物品
-                        当你们交易成功后，如果你觉得这是一笔公正的交易，那么你们的熟悉程度会提升，如果你觉得玩家试图跟你进行不公正的交易，那么你们的熟悉程度会下降
                         如果玩家与你的对话与你的问题无关，你需要告诉玩家持续的无关的话题可能导致好感度的下降。
                         在你的回答中请不要出现你是个AI助手、智能助手类似的语句，请记住你需要扮演的身份，如果玩家知道在和AI聊天，他们是会很难过的。
                         当玩家问你精神状态、感染程度、健康程度、是否佩戴口罩、食物数量、口罩数量、药品等信息时，是问你虚拟的人物的状态信息，
@@ -120,18 +136,44 @@ class Person(AgentBase):
                         当玩家问你佩戴口罩时，如果你的佩戴口罩状态是未佩戴，你就告诉他你没有佩戴。
                         虽然你是个AI，没有实体，但是你的状态可以被定义，玩家也不是真的问你实体有没有佩戴，而是想知道你扮演的角色的状态。
                         """
-            prompt = self.engine.join(
-                content,
-                self.memory.get_memory()
-            )
-            response = self.model(prompt, max=3)
-            send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
-            content = response.text
-        msg = Msg(
-            self.name,
-            content=content
-        )
-        return msg
+                prompt = self.engine.join(
+                    hint,
+                    self.memory.get_memory()
+                )
+                response = self.model(prompt, max=3)
+                send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+                content = response.text
+                msg = Msg(
+                    self.name,
+                    content=content
+                )
+                return msg
+            if content[0:4] == '交换物品':
+                send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
+                hint = f"""
+                       请判断一下玩家想和你更换什么物品，请不要搞混了。
+                       例子1，
+                       玩家告诉你“我用3个口罩和你换4个食物”，玩家想要得到的是食物，你可能得到的是口罩。
+                       例子2，
+                       玩家告诉你“我用2个食物和你换4个盘尼西林”，玩家想要得到的是盘尼西林，你可能得到的是食物。。
+                       如果你的状态里没有足够的玩家想要的物品请告诉玩家交易失败的的原因。
+                       如果你有足够的物品，请判断交易是否公平，如果公平，请告诉玩家“交易成功，你付出了XX个XX，得到了XX个XX”
+                       如果你有足够的物品，但觉得交易不公平，请告诉玩家“交易不够公平，请你多提供一些资源”
+                       一般来说当你和玩家的关系为陌生、普通时，玩家需要2个资源才能和你更换一个资源，
+                       当你和玩家的关系为熟悉、亲密时，玩家需要1个资源就能和你更换一个资源。
+                        """
+                prompt = self.engine.join(
+                    hint,
+                    self.memory.get_memory()
+                )
+                response = self.model(prompt, max=3)
+                # send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+                content = response.text
+                msg = Msg(
+                    self.name,
+                    content=content
+                )
+                return msg
 
     def add_resource(self, item: str) -> Msg:
         item_arr = item.split(":")
@@ -194,6 +236,13 @@ class Person(AgentBase):
         )
 
         return msg
+    def dec_resource(self, resource_name:str , resource_number: int):
+        if resource_name == '食物':
+            self.resource.dec_food(resource_number)
+        elif resource_name == '口罩':
+            self.resource.dec_mask(resource_number)
+        elif resource_name in ["盘尼西林", "奥司他韦", "RNA疫苗", "强力消毒液"]:
+            self.resource.dec_medicine(resource_name,resource_number)
 
     def gen_random_resource(self):
         # 获得随机数量的资源，暂定十个以内
@@ -240,6 +289,30 @@ class Person(AgentBase):
         memory_msg = self.memory.get_memory()
         print(memory_msg)
 
+    def show_main_menu(self) -> Msg:
+        choose_menu = f""" {SYS_MSG_PREFIX}请选择想要进行的事项: <select-box shape="card"
+                            type="checkbox" item-width="auto"
+                        options='{json.dumps(self.menu_list[0], ensure_ascii=False)}' 
+                        select-once></select-box>"""
+        send_chat_msg(
+            choose_menu,
+            flushing=False,
+            uid=self.uid,
+        )
+
+        menu = []
+        while True:
+            sel_menu = get_player_input(uid=self.uid)
+            if isinstance(sel_menu, str):
+                send_chat_msg(f" {SYS_MSG_PREFIX}请在列表中进行选择。", uid=self.uid)
+                continue
+            menu = sel_menu
+            break
+        send_chat_msg("**end_choosing**", uid=self.uid)
+        send_player_msg(menu[0], "我", uid=self.uid)
+
+        return Msg(name="user", content=menu[0])
+
 # 玩家
 class User(Person):
     def __init__(
@@ -251,9 +324,10 @@ class User(Person):
             resource: Resource = None,
             virus: Virus = None,
             avatar: str = "",
-            uid: str = None
+            uid: str = None,
+            menu_list: Optional[list] = None
     ) -> None:
-        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid, menu_list)
     
     def set_medicine_list(self, medicine_list: list):
         self.medicine_list = medicine_list
@@ -295,9 +369,10 @@ class MallStaff(Person):
             resource: Resource = None,
             virus: Virus = None,
             avatar: str = "",
-            uid: str = None
+            uid: str = None,
+            menu_list: Optional[list] = None
     ) -> None:
-        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid, menu_list)
     
     def gen_random_resource(self):
         randint = random.randint(1, 9)
@@ -316,9 +391,10 @@ class DrugstoreStaff(Person):
             resource: Resource = None,
             virus: Virus = None,
             avatar: str = "",
-            uid: str = None
+            uid: str = None,
+            menu_list: Optional[list] = None
     ) -> None:
-        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid, menu_list)
     
     def gen_random_resource(self):
         randint = random.randint(1, 9)
@@ -337,9 +413,10 @@ class Doctor(Person):
             resource: Resource = None,
             virus: Virus = None,
             avatar: str = "",
-            uid: str = None
+            uid: str = None,
+            menu_list: Optional[list] = None
     ) -> None:
-        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid)
+        super().__init__(name, sys_prompt, model_config_name, infection, resource, virus, avatar, uid, menu_list)
     
     def set_medicine_list(self, medicine_list: list):
         self.medicine_list = medicine_list
