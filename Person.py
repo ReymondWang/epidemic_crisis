@@ -203,6 +203,7 @@ class Person(AgentBase):
         )
 
         return msg
+    
     def dec_resource(self, resource_name:str , resource_number: int):
         if resource_name == '食物':
             self.resource.dec_food(resource_number)

@@ -213,9 +213,7 @@ if __name__ == "__main__":
             reset_glb_var(uid)
 
 
-    with open("assets/app.css", "r", encoding="utf-8") as css_file:
-        css = css_file.read()
-    with gr.Blocks(css) as env:
+    with gr.Blocks(css="assets/app.css") as env:
         warning_html_code = """
         <div class="hint" style="background-color: rgba(255, 255, 0, 0.15); padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ffcc00;">
             <p>网络有可能不稳定造成界面错误，请刷新浏览器并点击 <strong>🔥 续写情缘</strong> 继续游戏。</p>
