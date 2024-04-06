@@ -50,8 +50,8 @@ class Place(AgentBase):
         self.medicine_list = medicine_list
 
     def reply(self, x: dict = None) -> dict:
-        if x is not None:
-            self.memory.add(x)
+        # if x is not None:
+        #     self.memory.add(x)
 
         content = x.get("content")
         print("----Place收到的消息----")

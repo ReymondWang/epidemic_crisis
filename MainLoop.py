@@ -13,7 +13,7 @@ from Person import Person, MallStaff, DrugstoreStaff, Doctor, User
 from Research import Research
 from enums import InfectionLevel, EffectLevel, RelationLevel
 from utils import SYS_MSG_PREFIX
-from utils import InfectionLevel_TEXT
+from utils import InfectionLevel_TEXT, HealthLevel_TEXT
 from utils import send_chat_msg, send_player_msg, send_player_input, get_player_input, get_medicine
 from agentscope.message import Msg
 from Relation import Relation
@@ -482,6 +482,7 @@ def main_loop(args) -> None:
         msg = systemAgent(msg)
         content = msg.get("content")
         if content == "***game over***":
+            send_player_input("**Reset**", uid=args.uid)
             break
         if content in place_dic:
             msg = place_loop(place_dic[content], user, medicine_dic=medicine_dic, uid=args.uid, SystemAgent=SystemAgent)
@@ -507,6 +508,11 @@ def main_loop(args) -> None:
                     user.update_status()
                     msg = f'你成功使用了1个食物，当前你的健康状态是{HealthLevel_TEXT[user.physicalHealth]}'
                     send_chat_msg(msg=msg, role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+            msg = Msg(
+                name=research.name,
+                role="user",
+                content="主菜单"
+            )
         if content == "使用口罩":
             if user.isWearingMask:
                 send_chat_msg("当前无需使用口罩", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
@@ -519,7 +525,11 @@ def main_loop(args) -> None:
                     user.update_status()
                     msg = f'你成功使用了1个口罩，当前你的已佩戴口罩'
                     send_chat_msg(msg=msg, role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
-
+            msg = Msg(
+                name=research.name,
+                role="user",
+                content="主菜单"
+            )
         if content == "使用药品":
             if user.infection == 0:
                 send_chat_msg("当前无需使用药品", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
@@ -539,7 +549,13 @@ def main_loop(args) -> None:
                         user.infection -= 2
                         if user.infection < 0:
                             user.infection = 0
-                    elif medicine_name == 'RNA疫苗':
+                    elif medicine_name == '强力消毒液':
                         send_chat_msg("强力消毒液只能用于场所消毒，你无法使用", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
-
+                else:
+                    send_chat_msg(f"你没有要使用的{medicine_name}，请去医院购买或与村民交换。", role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
+            msg = Msg(
+                name=research.name,
+                role="user",
+                content="主菜单"
+            )
 

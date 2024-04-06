@@ -85,9 +85,9 @@ class Person(AgentBase):
         send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
         
         if self.relations[0].level == 1:
-            hint = self.sys_prompt + f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话。'
+            hint = self.sys_prompt + f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话，100字以内。'
         else:
-            hint = f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话。'
+            hint = f'你与玩家的熟悉程度是{RelationLevel_TEXT[self.relations[0].level]}，你需要根据熟悉程度生成一段欢迎的话，100字以内。'
         prompt = self.engine.join(hint,self.memory.get_memory())
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
