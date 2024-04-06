@@ -93,7 +93,7 @@ def infect(obj1: any, obj2: any):
             target.infection = InfectionLevel.TINY
     
 
-def place_loop(place: Place, user: Person, uid):
+def place_loop(place: Place, user: Person, medicine_dic:dict, uid):
     """
     针对场所的主要循环，负责用户和各个场所的互动。
     """
@@ -383,7 +383,7 @@ def main_loop(args) -> None:
         avatar="./assets/hospital.jpg",
         uid=args.uid
     )
-    
+    hospital.set_medicine_list(medicine_list)
     hospital.gen_resource(medicine_list)
     
     place_dic = {
@@ -479,7 +479,7 @@ def main_loop(args) -> None:
         if content == "***game over***":
             break
         if content in place_dic:
-            msg = place_loop(place_dic[content], user, uid=args.uid)
+            msg = place_loop(place_dic[content], user, medicine_dic=medicine_dic, uid=args.uid)
         if '查看状态' in content:
             if content[5:] in npc_dict :
                 msg = inspection_loop(npc_dict[content[5:]], uid=args.uid, SystemAgent=systemAgent)

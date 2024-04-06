@@ -46,6 +46,9 @@ class Place(AgentBase):
         self.avatar = avatar
         self.uid = uid
 
+    def set_medicine_list(self, medicine_list:list):
+        self.medicine_list = medicine_list
+
     def reply(self, x: dict = None) -> dict:
         if x is not None:
             self.memory.add(x)
@@ -56,27 +59,31 @@ class Place(AgentBase):
         time.sleep(0.5)
         while True:
             if "采购" in content:
-                send_chat_msg(f" {SYS_MSG_PREFIX}你可以输入购买xx个{content[2:4]}。结束购物请输入“结束”", uid=self.uid)
+                self.purchase_item_name = content[2:4]
+                if self.name == "医院":
+                    medicine_name_list = []
+                    for medicine in self.medicine_list:
+                        if medicine.enable == "Y":
+                            medicine_name_list.append(medicine.name)
+                    medicine_name = ", ".join(medicine_name_list)    
+                    send_chat_msg(f" {SYS_MSG_PREFIX}你可以输入购买xx个{self.purchase_item_name}，现在可用药品有{medicine_name}。结束购物请输入“结束”", uid=self.uid)
+                else:
+                    send_chat_msg(f" {SYS_MSG_PREFIX}你可以输入购买xx个{self.purchase_item_name}。结束购物请输入“结束”", uid=self.uid)
                 content = self.send_chat(hint= f"请说一句欢迎{content}的话，并询问客人要买多少，50字以内")
             elif content == "病毒消杀":
                 content = "***kill_virus***"
             elif content == "结束":
                 content = "***end***"
             elif content == "***success***":
-                content = self.send_chat(hint= f"请说一句{content}成功，感谢惠顾的话，50字以内")
+                content = self.send_chat(hint= f"请说一句采购{self.purchase_item_name}成功，感谢惠顾的话，50字以内")
             elif content == "未知物品":
-                content = self.send_chat(hint= f"请说一句你没有客人要购买的物品的话，并告诉客人你卖的是{content[2:4]}，请客人重新购买，50字以内")
+                content = self.send_chat(hint= f"请说一句你没有客人要购买的物品的话，并告诉客人你卖的是{self.purchase_item_name}，请客人重新购买，50字以内")
             else:
                 res = self.get_number(content)
                 if res["success"] == "Y":
                     content = res
                 else:
-                    prompt = self.engine.join(
-                        self.sys_prompt + content,
-                        self.memory.get_memory()
-                    )
-                    response = self.model(prompt, max=3)
-                    send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
+                    send_chat_msg(res["content"], role=self.name, uid=self.uid, avatar=self.avatar)
                     content = get_player_input(uid=self.uid)
             break
 
@@ -88,12 +95,10 @@ class Place(AgentBase):
         return msg
 
     def send_chat(self, hint):
+        print(f"----send_chat, hit:{hint}----")
         send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
         
-        prompt = self.engine.join(
-            self.sys_prompt + hint,
-            self.memory.get_memory()
-        )
+        prompt = self.engine.join(self.sys_prompt + hint)
         response = self.model(prompt, max=3)
         send_chat_msg(response.text, role=self.name, uid=self.uid, avatar=self.avatar)
         user_input = get_player_input(uid=self.uid)
@@ -148,13 +153,73 @@ class Place(AgentBase):
             res_str = "未知物品"
         res = {}
         if ":" in res_str:
-            res["success"] = "Y"
-            res["content"] = res_str
+            item_name = res_str.split(":")[0]
+            item_number = res_str.split(":")[1]
+            category, is_correct = self.get_resource_type(item_name)
+            if is_correct:
+                res["success"] = "Y"
+                res["content"] = category + ":" + item_number
+            else:
+                res["success"] = "N"
+                res["content"] = category
         else:
             res["success"] = "N"
+            res["content"] = res_str
         
         return res
-        
+
+    def get_resource_type(self, item_name):
+        hint = f"""现在要判断一个物品的属于哪个类别。
+        例子1
+        食物 食物
+        例子2
+        面包 食物
+        例子3
+        N95 口罩
+        例子4
+        口罩 口罩
+        例子5
+        青霉素 盘尼西林
+        例子6
+        奥司他韦 奥司他韦
+        例子7
+        RNA RNA疫苗
+        例子8
+        强力消毒液 强力消毒液
+        请在食物, 口罩, 盘尼西林, 奥司他韦, RNA疫苗, 强力消毒液这六个类别内返回，并且只返回类别名称。
+        """
+
+        medicine_name_list = []
+        if self.name == "医院":
+            for medicine in self.medicine_list:
+                if medicine.enable == "Y":
+                    medicine_name_list.append(medicine.name)
+
+        prompt = self.engine.join(
+            hint + "\n" + item_name
+        )
+        response = self.model(prompt, max=3)
+        res_str = response.text
+
+        print("------判断物资类型------" + res_str)
+
+        if self.name == "百货商场":
+            if res_str == "食物":
+                return res_str, True
+            else:
+                return "对不起，我们只销售食物。", False
+        if self.name == "大药房":
+            if res_str == "口罩":
+                return res_str, True
+            else:
+                return "对不起，我们只销售口罩。", False
+        if self.name == "医院":
+            if res_str in medicine_name_list:
+                return res_str, True
+            else:
+                medicine_str = ", ".join(medicine_name_list)
+                return f"对不起，我们只销售{medicine_str}.", False
+
     def welcome(self) -> Msg:
         send_chat_msg("**speak**", role=self.name, uid=self.uid, avatar=self.avatar)
         
