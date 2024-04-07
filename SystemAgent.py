@@ -119,6 +119,7 @@ class SystemAgent(AgentBase):
         self.user.virus_growing()
         self.user.die()
         self.user.isWearingMask = False
+        self.user.physicalHealth -= 1
         self.user.update_status()
         for person in self.person_list:
             person.gen_random_resource()

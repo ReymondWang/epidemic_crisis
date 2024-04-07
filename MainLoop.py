@@ -523,7 +523,7 @@ def main_loop(args) -> None:
                     user.resource.dec_mask(1)
                     user.isWearingMask = True
                     user.update_status()
-                    msg = f'你成功使用了1个口罩，当前你的已佩戴口罩'
+                    msg = f'你成功使用了1个口罩，当前你已佩戴口罩'
                     send_chat_msg(msg=msg, role="游戏精灵", uid=args.uid, avatar="./assets/system.png")
             msg = Msg(
                 name=research.name,
